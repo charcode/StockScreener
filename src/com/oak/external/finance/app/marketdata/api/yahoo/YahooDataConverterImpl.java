@@ -18,8 +18,8 @@ import yahoofinance.quotes.stock.StockDividend;
 import yahoofinance.quotes.stock.StockQuote;
 import yahoofinance.quotes.stock.StockStats;
 
+import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
-import com.oak.api.finance.model.economy.Economic;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConverter;
 
 public class YahooDataConverterImpl implements YahooDataConverter {

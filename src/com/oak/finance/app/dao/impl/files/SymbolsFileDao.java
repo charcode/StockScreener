@@ -15,8 +15,8 @@ import java.util.TreeSet;
 
 import org.apache.logging.log4j.Logger;
 
+import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
-import com.oak.api.finance.model.economy.Economic;
 import com.oak.external.utils.input.api.StreamProvider;
 import com.oak.finance.app.dao.SymbolsDao;
 
@@ -57,7 +57,7 @@ public class SymbolsFileDao implements SymbolsDao {
      * @return
      */
     private Set<String> readLines(String filename, String commentMarker) {
-	Set<String> stocksWithoutPrices = new HashSet<String>();
+	Set<String> symbols = new HashSet<String>();
 	    Set<String> ret = new HashSet<String>();
 	    // This will reference one line at a time
 	    String line = null;
@@ -91,12 +91,12 @@ public class SymbolsFileDao implements SymbolsDao {
 		    sc.close();
 		}
 	    }
-	    stocksWithoutPrices.addAll(ret);
-	    logger.debug("finished reading  " + stocksWithoutPrices.size()
-		    + " symbols without price from: "
+	    symbols.addAll(ret);
+	    logger.debug("finished reading  " + symbols.size()
+		    + " symbols from: "
 		    + filename);
 	
-	return stocksWithoutPrices;
+	return symbols;
     }
 
 

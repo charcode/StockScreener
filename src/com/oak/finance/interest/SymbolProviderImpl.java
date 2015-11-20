@@ -7,8 +7,8 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
-import com.oak.api.finance.model.economy.Economic;
 import com.oak.finance.app.dao.SymbolsDao;
 
 public class SymbolProviderImpl implements SymbolsProvider {

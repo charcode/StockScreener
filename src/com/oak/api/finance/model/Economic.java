@@ -1,4 +1,4 @@
-package com.oak.api.finance.model.economy;
+package com.oak.api.finance.model;
 
 import java.util.Calendar;
 import java.util.Date;

@@ -5,13 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.apache.logging.log4j.Logger;
 
 import com.oak.api.finance.model.CashFlowStatement;
-import com.oak.external.finance.model.economy.IncomeStatement;
 
 public class YahooWebDataCashFlowStatementDao extends
 	AbstractYahooFinanceWebParser<CashFlowStatement> implements CashFlowStatementDao {

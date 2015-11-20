@@ -13,8 +13,8 @@ import org.apache.logging.log4j.Logger;
 
 import yahoofinance.YahooFinance;
 
+import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
-import com.oak.api.finance.model.economy.Economic;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
 
 public class YahooDataConnector implements DataConnector {

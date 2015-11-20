@@ -12,8 +12,8 @@ import org.mockito.Mock;
 import org.mockito.internal.util.collections.Sets;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
-import com.oak.api.finance.model.economy.Economic;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConnector;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConverter;
 import com.oak.external.finance.app.marketdata.api.yahoo.YahooDataConverterImpl;

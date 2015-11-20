@@ -17,9 +17,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.logging.log4j.Logger;
 
+import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.FinancialAnalysis;
 import com.oak.api.finance.model.Stock;
-import com.oak.api.finance.model.economy.Economic;
 import com.oak.external.finance.app.marketdata.api.MarketDataProvider;
 import com.oak.finance.app.monitor.analysis.FinanceAnalysisController;
 import com.oak.finance.app.monitor.analysis.FinanceAnalysisController.FinanceAnalysisCallback;

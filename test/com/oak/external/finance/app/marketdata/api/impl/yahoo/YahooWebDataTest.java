@@ -1,7 +1,5 @@
 package com.oak.external.finance.app.marketdata.api.impl.yahoo;
 
-import static org.junit.Assert.*;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;

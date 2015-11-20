@@ -4,8 +4,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
+import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
-import com.oak.api.finance.model.economy.Economic;
 
 public interface SymbolsProvider {
 	Set<String>getSymbols();

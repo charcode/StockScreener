@@ -1,10 +1,7 @@
 package com.oak.external.finance.app.marketdata.api.impl.yahoo;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.SortedMap;
 
 import org.apache.logging.log4j.LogManager;
