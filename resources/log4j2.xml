@@ -3,7 +3,7 @@
 status="WARN">
 <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-        <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        <PatternLayout pattern="%d{dd/MM/yyyy HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
     </Console>
     <File name="MyFile" fileName="logs/yahooFinance.log">
       <PatternLayout>

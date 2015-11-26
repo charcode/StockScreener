@@ -68,11 +68,18 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 				if (stockAnalysis.getAcceptance().equals(Acceptance.STRONG_BUY)) {
 					
 					SortedMap<Date, Double> assetToDebtRatios = stockAnalysis.getAssetToDebtRatiosAnnual();
-					Date latestDate = assetToDebtRatios.lastKey();
-					Double assetToDebt = assetToDebtRatios.get(latestDate);
-					log.debug("Stock to watch, Strong buy!! " + stock + ", per = " + per+", Debt ratio on "+latestDate+": "+assetToDebt);
-					
-					callback.onBuy(stock, economics, stockAnalysis);
+					if(!assetToDebtRatios.isEmpty()) {
+						Date latestDate = assetToDebtRatios.lastKey();
+						Double assetToDebt = assetToDebtRatios.get(latestDate);
+						log.debug("Stock to watch, Strong Buy!! " + stock.getSymbol()
+								+ ", per = " + per + ", Debt ratio on "
+								+ latestDate + ": " + assetToDebt);
+
+						callback.onBuy(stock, economics, stockAnalysis);
+					}else {
+						log.debug("Stock is strong buy " + stock.getSymbol()
+								+ ", per = " + per + ", but no debt ratios available");
+					}
 				}else if (stockAnalysis.getAcceptance().equals(Acceptance.BUY)) {
 					log.debug("Stock to watch " + stock + ", per = " + per);
 
@@ -144,6 +151,7 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 		FinancialAnalysis ret;
 
 		if (isAttractiveRatios) {
+			log.debug("getting balance sheet for "+stock.getSymbol());
 			SortedMap<Date, BalanceSheet> annualBalanceSheetForSymbol = balanceSheetDao
 					.getBalanceSheetForSymbol(stock.getSymbol(), true);
 			SortedMap<Date, BalanceSheet> quarterlyBalanceSheetForSymbol = balanceSheetDao
@@ -165,7 +173,7 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 			Acceptance acceptanceResult = analyseRatios(currentRatiosQutr,
 					quickRatiosQutr, assetToDebtRatiosQutr,
 					currentRatiosAnnual, quickRatiosAnnual,
-					assetToDebtRatiosAnnual);
+					assetToDebtRatiosAnnual, stock);
 			ret = new FinancialAnalysis(stock, e, comments, acceptanceResult,
 					currentRatiosQutr, quickRatiosQutr, assetToDebtRatiosQutr,
 					currentRatiosAnnual, quickRatiosAnnual,
@@ -178,130 +186,70 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 		return ret;
 	}
 
-	private Acceptance analyseRatios(SortedMap<Date, Double> currentRatiosQutr,
-			SortedMap<Date, Double> quickRatiosQutr,
-			SortedMap<Date, Double> assetToDebtRatiosQutr,
-			SortedMap<Date, Double> currentRatiosAnnual,
-			SortedMap<Date, Double> quickRatiosAnnual,
-			SortedMap<Date, Double> assetToDebtRatiosAnnual) {
-
-		// targetMinCurrentRatio = 2.0;
+	private class Results{
+		final boolean good;
+		final boolean excellent;
+		final boolean onlyLast;
+		public Results(boolean good, boolean excellent, boolean onlyLast) {
+			super();
+			this.good = good;
+			this.excellent = excellent;
+			this.onlyLast = onlyLast;
+		}
+	}
+	
+	private Results computeResult(SortedMap<Date, Double> dataPoints, double min) {
 		boolean all = true;
 		double average = 0;
 		int count = 0;
 		double last = 0;
-		for (Date d : currentRatiosQutr.keySet()) {
+		for (Date d : dataPoints.keySet()) {
 			count++;
-			double r = currentRatiosQutr.get(d);
-			if (r < targetMinCurrentRatio) {
+			double r = dataPoints.get(d);
+			if (r < min) {
 				all = false;
 			}
 			average += r;
 			last = r;
 		}
 		average /= count;
-		boolean currentRatiosQutrGood = average > targetMinCurrentRatio;
-		boolean currentRatiosQutrExcellent = all
-				&& last > targetMinCurrentRatio;
+		boolean good= average> min && last  > min;
+		boolean onlyLast = last>min;
+		Results	res = new Results(good,all,onlyLast);
+		return res;
+	}
 
-		count = 0;
-		average = 0;
-		all = true;
-		for (Date d : currentRatiosAnnual.keySet()) {
-			count++;
-			double r = currentRatiosAnnual.get(d);
-			if (r < targetMinCurrentRatio) {
-				all = false;
-			}
-			average += r;
-			last = r;
-		}
-		average /= count;
-		boolean currentRatiosAnnualGood = average > targetMinCurrentRatio;
-		boolean currentRatiosAnnualExcellent = all
-				&& last > targetMinCurrentRatio;
-
+	private Acceptance analyseRatios(SortedMap<Date, Double> currentRatiosQutr,
+			SortedMap<Date, Double> quickRatiosQutr,
+			SortedMap<Date, Double> assetToDebtRatiosQutrData,
+			SortedMap<Date, Double> currentRatiosAnnual,
+			SortedMap<Date, Double> quickRatiosAnnual,
+			SortedMap<Date, Double> assetToDebtRatiosAnnualData, Stock stock) {
+	
+		// targetMinCurrentRatio = 2.0;
+		Results currentRatiosQutrRes = computeResult(currentRatiosQutr,targetMinCurrentRatio);	
+		Results currentRatiosAnnualRes = computeResult(currentRatiosAnnual,targetMinCurrentRatio);
 		// quickCash > 1.0 is good
-
-		count = 0;
-		average = 0;
-		all = true;
-		for (Date d : quickRatiosAnnual.keySet()) {
-			count++;
-			double r = quickRatiosAnnual.get(d);
-			if (r < targetMinCurrentRatio) {
-				all = false;
-			}
-			average += r;
-			last = r;
-		}
-		average /= count;
-		boolean quickRatiosAnnualGood = average > targetMinQuickRatio;
-		boolean quickRatiosAnnualExcellent = all && last > targetMinQuickRatio;
-
-		count = 0;
-		average = 0;
-		all = true;
-		for (Date d : quickRatiosQutr.keySet()) {
-			count++;
-			double r = quickRatiosQutr.get(d);
-			if (r < targetMinCurrentRatio) {
-				all = false;
-			}
-			average += r;
-			last = r;
-		}
-		average /= count;
-		boolean quickRatiosQutrGood = average > targetMinCurrentRatio;
-		boolean quickRatiosQutrExcellent = all && last > targetMinCurrentRatio;
-
+		Results quickRatiosQutrRes = computeResult(quickRatiosQutr,targetMinQuickRatio);
+		Results quickRatiosAnnualRes = computeResult(quickRatiosAnnual,targetMinQuickRatio);
 		// assetToDebt > 2.9 is good
-
-		count = 0;
-		average = 0;
-		all = true;
-		for (Date d : assetToDebtRatiosAnnual.keySet()) {
-			count++;
-			double r = assetToDebtRatiosAnnual.get(d);
-			if (r < targetMinCurrentRatio) {
-				all = false;
-			}
-			average += r;
-			last = r;
-		}
-		average /= count;
-		boolean assetToDebtRatiosAnnualGood = average > targetMinAssetToDebtRatio
-				&& last > targetMinAssetToDebtRatio;
-		boolean assetToDebtRatiosAnnualxcellent = all
-				&& last > targetMinAssetToDebtRatio;
-
-		count = 0;
-		average = 0;
-		all = true;
-		for (Date d : assetToDebtRatiosQutr.keySet()) {
-			count++;
-			double r = assetToDebtRatiosQutr.get(d);
-			if (r < targetMinCurrentRatio) {
-				all = false;
-			}
-			average += r;
-			last = r;
-		}
-		average /= count;
-		boolean assetToDebtRatiosQutrGood = average > targetMinAssetToDebtRatio
-				&& last > targetMinAssetToDebtRatio;
-		boolean assetToDebtRatiosQutrExcellent = all
-				&& last > targetMinAssetToDebtRatio;
-
+		Results assetToDebtRatiosQutr = computeResult(assetToDebtRatiosQutrData, targetMinAssetToDebtRatio);
+		Results assetToDebtRatiosAnnual = computeResult(assetToDebtRatiosAnnualData, targetMinAssetToDebtRatio);
+		
 		Acceptance ret;
-		if (currentRatiosAnnualExcellent && currentRatiosQutrExcellent
-				&& quickRatiosAnnualExcellent && quickRatiosQutrExcellent
-				&& assetToDebtRatiosQutrExcellent
-				&& assetToDebtRatiosAnnualxcellent) {
+		if (currentRatiosAnnualRes.excellent && currentRatiosQutrRes.excellent
+				&& quickRatiosAnnualRes.excellent && quickRatiosQutrRes.excellent
+				&& assetToDebtRatiosQutr.excellent
+				&& assetToDebtRatiosAnnual.excellent) {
 			ret = Acceptance.STRONG_BUY;
-		} else if (currentRatiosQutrGood && quickRatiosAnnualGood
-				&& quickRatiosQutrGood && currentRatiosAnnualGood
-				&& assetToDebtRatiosQutrGood && assetToDebtRatiosAnnualGood) {
+		} else if (currentRatiosQutrRes.good && quickRatiosAnnualRes.good
+				&& quickRatiosQutrRes.good && currentRatiosAnnualRes.good
+				&& assetToDebtRatiosQutr.good && assetToDebtRatiosAnnual.good) {
+			ret = Acceptance.BUY;
+		} else if(                                  
+			currentRatiosQutrRes.good  && quickRatiosAnnualRes.onlyLast  &&    
+			quickRatiosQutrRes.good    && currentRatiosAnnualRes.onlyLast  &&    
+			assetToDebtRatiosQutr.good && assetToDebtRatiosAnnual.onlyLast	){
 			ret = Acceptance.BUY;
 		} else {
 			ret = Acceptance.HOLD;
@@ -309,6 +257,7 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 		return ret;
 	}
 
+	
 	private void calculateRatiosFromBalanceSheets(
 			SortedMap<Date, BalanceSheet> quarterlyBalanceSheetForSymbol,
 			SortedMap<Date, Double> currentRatios,
