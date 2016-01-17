@@ -1,26 +1,18 @@
 package com.oak.api.finance.model;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-
-import javax.swing.event.ListSelectionEvent;
 
 public class FinancialAnalysis {
 	public enum Acceptance {
 		STRONG_BUY, BUY, HOLD, SELL, STRONG_SELL
 	}
 
-	private final Stock stock;
-	private final Economic economic;
-	private final List<FinancialComment> comments;
-	private final Acceptance acceptance;
 
 	private class SafeMap extends ConcurrentSkipListMap<Date, Double> {
 		private static final long serialVersionUID = 2874300412209007915L;
@@ -33,6 +25,10 @@ public class FinancialAnalysis {
 		}
 	}
 
+	private final Stock stock;
+	private final Economic economic;
+	private final List<FinancialComment> comments;
+	private final Acceptance acceptance;
 	private final SortedMap<Date, Double> currentRatiosQutr = new SafeMap();
 	private final SortedMap<Date, Double> quickRatiosQutr = new SafeMap();
 	private final SortedMap<Date, Double> assetToDebtRatiosQutr = new SafeMap();
@@ -85,29 +81,31 @@ public class FinancialAnalysis {
 	public List<FinancialComment> getComments() {
 		return comments;
 	}
-
+	private <K,V>SortedMap<K,V> finalSortedMap(SortedMap<K,V>m){
+		return Collections.unmodifiableSortedMap(m);
+	}
 	public SortedMap<Date, Double> getCurrentRatiosQutr() {
-		return currentRatiosQutr;
+		return finalSortedMap(currentRatiosQutr);
 	}
 
 	public SortedMap<Date, Double> getQuickRatiosQutr() {
-		return quickRatiosQutr;
+		return finalSortedMap(quickRatiosQutr);
 	}
 
 	public SortedMap<Date, Double> getAssetToDebtRatiosQutr() {
-		return assetToDebtRatiosQutr;
+		return finalSortedMap(assetToDebtRatiosQutr);
 	}
 
 	public SortedMap<Date, Double> getCurrentRatiosAnnual() {
-		return currentRatiosAnnual;
+		return finalSortedMap(currentRatiosAnnual);
 	}
 
 	public SortedMap<Date, Double> getQuickRatiosAnnual() {
-		return quickRatiosAnnual;
+		return finalSortedMap(quickRatiosAnnual);
 	}
 
 	public SortedMap<Date, Double> getAssetToDebtRatiosAnnual() {
-		return assetToDebtRatiosAnnual;
+		return finalSortedMap(assetToDebtRatiosAnnual);
 	}
 
 }

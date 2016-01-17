@@ -6,9 +6,7 @@ status="WARN">
         <PatternLayout pattern="%d{dd/MM/yyyy HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
     </Console>
     <File name="MyFile" fileName="logs/yahooFinance.log">
-      <PatternLayout>
-        <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
-      </PatternLayout>
+      <PatternLayout Pattern ="%d{dd/MM/yyyy HH:mm:ss.SSS} %p %c{1.} [%t] %m%n"/>
     </File>
     <Async name="Async">
       <AppenderRef ref="MyFile"/>
