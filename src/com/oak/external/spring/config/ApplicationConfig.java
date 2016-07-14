@@ -36,8 +36,9 @@ public class ApplicationConfig {
 	private int waitInMilliseconds = 500;
 	private long historyBackInMilliSeconds = 7 * 24 * 60 * 60 * 1000;
 	// private String stocksFilename = "/stocks/yahoo.csv";
-	private String stocksFilename = "C:\\Users\\charb_000\\Documents\\invest\\data\\yahoo.csv";
-	private String interestingCompaniesSymbolsFileName = "C:\\Users\\charb_000\\Documents\\invest\\data\\interestingCompaniesSymbolsFileName.csv";
+	private static String ROOT_PATH = "C:\\Users\\charb\\Dropbox\\invest\\";
+	private String stocksFilename = ROOT_PATH + "yahoo.csv";
+	private String interestingCompaniesSymbolsFileName = ROOT_PATH + "interestingCompaniesSymbolsFileName.csv";
 	// private String stocksFilename =
 	// "C:\\Users\\charb_000\\Documents\\invest\\data\\yahoo.us.csv";
 	// private String stocksFilename =
@@ -46,8 +47,8 @@ public class ApplicationConfig {
 	// "/stocks/yahooStocksWithoutPrices.csv";
 	// private String stocksWithNoPriceFileName=
 	// "/stocks/stocksWithNoPrice.txt";
-	private String stocksWithNoPriceFileName = "C:\\Users\\charb_000\\Documents\\invest\\data\\stocksWithNoPrice.txt";
-	private String stocksToWatch = "C:\\Users\\charb_000\\Documents\\invest\\data\\watchList.csv";
+	private String stocksWithNoPriceFileName = ROOT_PATH + "stocksWithNoPrice.txt";
+	private String stocksToWatch = ROOT_PATH + "watchList.csv";
 	// private String stocksToWatch =
 	// "C:\\Users\\charb_000\\Documents\\invest\\data\\test_watchList.csv";
 	private Double targetMinCurrentRatio = 2.0;
