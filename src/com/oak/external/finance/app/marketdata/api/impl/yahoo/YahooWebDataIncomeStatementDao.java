@@ -8,6 +8,7 @@ import java.util.SortedMap;
 
 import org.apache.logging.log4j.Logger;
 
+import com.oak.external.finance.app.marketdata.api.IncomeStatementDao;
 import com.oak.external.finance.model.economy.IncomeStatement;
 
 public class YahooWebDataIncomeStatementDao extends

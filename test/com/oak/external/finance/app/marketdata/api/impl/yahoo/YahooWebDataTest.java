@@ -4,10 +4,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
 
 public class YahooWebDataTest {
     SimpleDateFormat f = new SimpleDateFormat("dd-MMM-yyyy");
@@ -18,11 +21,13 @@ public class YahooWebDataTest {
 	undertest = new YahooWebDataBalanceSheetDao(null);
     }
 
-    @Test
-    public void testGetBalanceSheets() {
-	undertest.getBalanceSheetsBySymbol(Collections.singleton("GLEN.L"), true /*annual*/);
-    
-    }
+	@Test
+	public void testGetBalanceSheets() {
+		HashMap<String, String> stocks = new HashMap<String, String>();
+		stocks.put("GLEN.L", "LSE");
+		undertest.getBalanceSheetsBySymbol(stocks, true /* annual */);
+
+	}
 
 
     protected boolean dateEquals(Date date,String d2) {

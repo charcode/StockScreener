@@ -1,4 +1,4 @@
-package com.oak.external.finance.app.marketdata.api.impl.yahoo;
+package com.oak.external.finance.app.marketdata.api;
 
 import java.util.Date;
 import java.util.SortedMap;

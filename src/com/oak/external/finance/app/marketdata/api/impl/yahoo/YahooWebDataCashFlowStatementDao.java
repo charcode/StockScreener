@@ -9,6 +9,7 @@ import java.util.SortedMap;
 import org.apache.logging.log4j.Logger;
 
 import com.oak.api.finance.model.CashFlowStatement;
+import com.oak.external.finance.app.marketdata.api.CashFlowStatementDao;
 
 public class YahooWebDataCashFlowStatementDao extends
 	AbstractYahooFinanceWebParser<CashFlowStatement> implements CashFlowStatementDao {

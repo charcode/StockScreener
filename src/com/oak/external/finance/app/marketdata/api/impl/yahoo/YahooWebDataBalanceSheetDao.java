@@ -10,6 +10,7 @@ import java.util.SortedMap;
 import org.apache.logging.log4j.Logger;
 
 import com.oak.api.finance.model.BalanceSheet;
+import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
 
 public class YahooWebDataBalanceSheetDao extends
 		AbstractYahooFinanceWebParser<BalanceSheet> implements BalanceSheetDao {
@@ -97,7 +98,7 @@ public class YahooWebDataBalanceSheetDao extends
 
 	@Override
 	public SortedMap<Date, BalanceSheet> getBalanceSheetForSymbol(
-			String symbol, boolean annual) {
+			String symbol, String exchange, boolean annual) {
 		SortedMap<Date, BalanceSheet> balanceSheetsOnPage = getStatementsForSymbol(
 				symbol, annual);
 		return balanceSheetsOnPage;
@@ -105,15 +106,16 @@ public class YahooWebDataBalanceSheetDao extends
 
 	@Override
 	public Map<String, SortedMap<Date, BalanceSheet>> getBalanceSheetsBySymbol(
-			Set<String> symbols, boolean annual) {
+			Map<String, String> symbols, boolean annual) {
 		Map<String, SortedMap<Date, BalanceSheet>> ret = null;
 
 		if (symbols != null) {
 			ret = new HashMap<String, SortedMap<Date, BalanceSheet>>();
 
-			for (String symbol : symbols) {
+			for (String symbol : symbols.keySet()) {
+				String exchange = symbols.get(symbol);
 				SortedMap<Date, BalanceSheet> balanceSheetForSymbol = getBalanceSheetForSymbol(
-						symbol, annual);
+						symbol, exchange, annual);
 				ret.put(symbol, balanceSheetForSymbol);
 			}
 		}

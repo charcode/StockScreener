@@ -5,14 +5,17 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.oak.api.finance.model.FinancialData;
+import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
+import com.oak.external.finance.app.marketdata.api.CashFlowStatementDao;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
+import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
+import com.oak.external.finance.app.marketdata.api.IncomeStatementDao;
 import com.oak.external.finance.app.marketdata.api.MarketDataProvider;
 import com.oak.external.finance.app.marketdata.api.impl.MarketDataPollingProviderImpl;
-import com.oak.external.finance.app.marketdata.api.impl.yahoo.BalanceSheetDao;
-import com.oak.external.finance.app.marketdata.api.impl.yahoo.CashFlowStatementDao;
-import com.oak.external.finance.app.marketdata.api.impl.yahoo.IncomeStatementDao;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConnector;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConverter;
+import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooJsonFinancialDataDao;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooWebDataBalanceSheetDao;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooWebDataCashFlowStatementDao;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooWebDataIncomeStatementDao;
@@ -37,7 +40,10 @@ public class ApplicationConfig {
 	private long historyBackInMilliSeconds = 7 * 24 * 60 * 60 * 1000;
 	// private String stocksFilename = "/stocks/yahoo.csv";
 	private static String ROOT_PATH = "C:\\Users\\charb\\Dropbox\\invest\\";
-	private String stocksFilename = ROOT_PATH + "yahoo.csv";
+	private static String TEST_STOCKS = "yahoo_1.csv";
+	private static String STOCKS = "yahoo.csv";
+	
+	private String stocksFilename = ROOT_PATH + STOCKS;
 	private String interestingCompaniesSymbolsFileName = ROOT_PATH + "interestingCompaniesSymbolsFileName.csv";
 	// private String stocksFilename =
 	// "C:\\Users\\charb_000\\Documents\\invest\\data\\yahoo.us.csv";
@@ -145,6 +151,13 @@ public class ApplicationConfig {
 		return marketDataMonitorsController;
 	}
 
+	@Bean 
+	FinancialDataDao financialDataDao() {
+		log.debug("creating yahooJsonFinancialDataDao...");
+		YahooJsonFinancialDataDao yahooJsonFinancialDataDao = new YahooJsonFinancialDataDao(LogManager.getFormatterLogger(YahooJsonFinancialDataDao.class));
+		log.debug("creating yahooJsonFinancialDataDao...done");
+		return yahooJsonFinancialDataDao;
+	}
 	@Bean
 	BalanceSheetDao balanceSheetDao() {
 		log.debug("creating balanceSheetDao...");
@@ -154,14 +167,14 @@ public class ApplicationConfig {
 		log.debug("creating balanceSheetDao... done");
 		return yahooWebDataBalanceSheet;
 	}
-	@Bean 
+	@Bean // TODO IncomeStatementDao Not used - needs cleaning up
 	IncomeStatementDao incomeStatementDao(){
 		log.debug("creating incomeStatementDao... instance of YahooWebDataIncomeStatementDao");
 		YahooWebDataIncomeStatementDao yahooWebDataIncomeStatementDao = new YahooWebDataIncomeStatementDao(LogManager.getFormatterLogger(YahooWebDataIncomeStatementDao.class));
 		log.debug("creating incomeStatementDao...done ");
 		return yahooWebDataIncomeStatementDao; 
 	}
-	@Bean 
+	@Bean // TODO CashFlowStatementDao Not used - needs cleaning up
 	CashFlowStatementDao cashFlowStatementDao(){
 		log.debug("creating incomeStatementDao... instance of YahooWebDataIncomeStatementDao");
 		YahooWebDataCashFlowStatementDao yahooWebDataCashFlowStatementDao = new YahooWebDataCashFlowStatementDao(LogManager.getFormatterLogger(YahooWebDataIncomeStatementDao.class));
@@ -173,7 +186,7 @@ public class ApplicationConfig {
 		log.debug("creating financeAnalysisController...");
 		Logger logger = LogManager .getFormatterLogger(FinanceFundamentalAnalysisControllerImpl.class);
 		FinanceFundamentalAnalysisControllerImpl financeFundamentalAnalysisController = new FinanceFundamentalAnalysisControllerImpl(
-				balanceSheetDao(), incomeStatementDao(), cashFlowStatementDao(),
+				financialDataDao(), 
 				targetMinCurrentRatio, targetMinQuickRatio, targetMinAssetToDebtRatio, logger);
 		log.debug("creating financeAnalysisController...done");
 		return financeFundamentalAnalysisController;

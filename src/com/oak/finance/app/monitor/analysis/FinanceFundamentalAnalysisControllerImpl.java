@@ -15,32 +15,27 @@ import com.oak.api.finance.model.BalanceSheet;
 import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.FinancialAnalysis;
 import com.oak.api.finance.model.FinancialAnalysis.Acceptance;
+import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
+import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
 import com.oak.api.finance.model.FinancialComment;
+import com.oak.api.finance.model.FinancialComment.CommentType;
+import com.oak.api.finance.model.FinancialData;
 import com.oak.api.finance.model.Stock;
-import com.oak.external.finance.app.marketdata.api.impl.yahoo.BalanceSheetDao;
-import com.oak.external.finance.app.marketdata.api.impl.yahoo.CashFlowStatementDao;
-import com.oak.external.finance.app.marketdata.api.impl.yahoo.IncomeStatementDao;
 
 public class FinanceFundamentalAnalysisControllerImpl implements
 		FinanceAnalysisController {
 	private final Logger log;
-	private final BalanceSheetDao balanceSheetDao;
-	private final IncomeStatementDao incomeStatementDao;
-	private final CashFlowStatementDao cashFlowStatementDao;
+	private final FinancialDataDao financialDataDao;
 	private final double targetMinCurrentRatio;
 	private final double targetMinQuickRatio;
 	private final double targetMinAssetToDebtRatio;
 
 	public FinanceFundamentalAnalysisControllerImpl(
-			BalanceSheetDao balanceSheetDao,
-			IncomeStatementDao incomeStatementDao,
-			CashFlowStatementDao cashFlowStatementDao,
+			FinancialDataDao financialDataDao,
 			double targetMinCurrentRatio, double targetMinQuickRatio,
 			double targetMinAssetToDebtRatio, Logger log) {
-		this.balanceSheetDao = balanceSheetDao;
+		this.financialDataDao = financialDataDao;
 		this.log = log;
-		this.incomeStatementDao = incomeStatementDao;
-		this.cashFlowStatementDao = cashFlowStatementDao;
 		this.targetMinCurrentRatio = targetMinCurrentRatio;
 		this.targetMinQuickRatio = targetMinQuickRatio;
 		this.targetMinAssetToDebtRatio = targetMinAssetToDebtRatio;
@@ -53,8 +48,6 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 		for (Date d : economics.keySet()) {
 			Economic e = economics.get(d);
 			Double eps = e.getEps();
-			Double pe = e.getPe();
-			Double peg = e.getPeg();
 			Double ask = e.getAsk();
 			Double bid = e.getBid();
 			Double per = 0d;
@@ -152,22 +145,28 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 
 		if (isAttractiveRatios) {
 			log.debug("getting balance sheet for "+stock.getSymbol());
-			SortedMap<Date, BalanceSheet> annualBalanceSheetForSymbol = balanceSheetDao
-					.getBalanceSheetForSymbol(stock.getSymbol(), true);
-			SortedMap<Date, BalanceSheet> quarterlyBalanceSheetForSymbol = balanceSheetDao
-					.getBalanceSheetForSymbol(stock.getSymbol(), false);
+			String exchange = stock.getStockExchange();
+//			SortedMap<Date, BalanceSheet> annualBalanceSheetForSymbol = balanceSheetDao
+//					.getBalanceSheetForSymbol(stock.getSymbol(), exchange, true);
+//			SortedMap<Date, BalanceSheet> quarterlyBalanceSheetForSymbol = balanceSheetDao
+//					.getBalanceSheetForSymbol(stock.getSymbol(), exchange, false);
 
+			String symbol = stock.getSymbol();
+			FinancialData financialData = financialDataDao.getFinancialDataForSymbol(symbol, exchange);
+			if(financialData != null) {
+			SortedMap<Date, BalanceSheet> annualBalanceSheet = financialData.getAnnualBalanceSheet();
+			SortedMap<Date, BalanceSheet> quarterlyBalanceSheet = financialData.getQuarterlyBalanceSheet();
 			SortedMap<Date, Double> currentRatiosQutr = new TreeMap<Date, Double>();
 			SortedMap<Date, Double> quickRatiosQutr = new TreeMap<Date, Double>();
 			SortedMap<Date, Double> assetToDebtRatiosQutr = new TreeMap<Date, Double>();
 
-			calculateRatiosFromBalanceSheets(quarterlyBalanceSheetForSymbol,
+			calculateRatiosFromBalanceSheets(quarterlyBalanceSheet,
 					currentRatiosQutr, quickRatiosQutr, assetToDebtRatiosQutr);
 
 			SortedMap<Date, Double> currentRatiosAnnual = new TreeMap<Date, Double>();
 			SortedMap<Date, Double> quickRatiosAnnual = new TreeMap<Date, Double>();
 			SortedMap<Date, Double> assetToDebtRatiosAnnual = new TreeMap<Date, Double>();
-			calculateRatiosFromBalanceSheets(annualBalanceSheetForSymbol,
+			calculateRatiosFromBalanceSheets(annualBalanceSheet,
 					currentRatiosAnnual, quickRatiosAnnual,
 					assetToDebtRatiosAnnual);
 			Acceptance acceptanceResult = analyseRatios(currentRatiosQutr,
@@ -178,6 +177,11 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 					currentRatiosQutr, quickRatiosQutr, assetToDebtRatiosQutr,
 					currentRatiosAnnual, quickRatiosAnnual,
 					assetToDebtRatiosAnnual);
+			}else {
+				comments.add(new FinancialComment("No financial data available", CommentType.MissingData));
+				ret = new FinancialAnalysis(stock, e, comments, Acceptance.HOLD,
+						null, null, null, null, null, null);
+			}
 		} else {
 			ret = new FinancialAnalysis(stock, e, comments, Acceptance.HOLD,
 					null, null, null, null, null, null);
@@ -332,7 +336,7 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 					FinancialComment.CommentType.BookValue));
 			isBookToValueAttractive = true;
 		} else if (per > 0 && bookValueMultiple > 0
-				&& bookValueMultiple * pe < 25) {
+				&& bookValueMultiple * pe < 27) {
 			String msg = "book value/share= " + bookValuePerShare
 					+ ", gives a multiple of = " + bookValueMultiple
 					+ ", per*bv=" + bookValueMultiple * pe;
@@ -347,7 +351,7 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 			boolean isEstimateEpsAttractive, double epsPercentCurrentYear,
 			double epsPercentNextQuarter, double epsPercentNextYear) {
 
-		if (epsPercentCurrentYear > 0.05 && epsPercentNextQuarter > 0.025
+		if (epsPercentCurrentYear > 0.05 && epsPercentNextQuarter > 0.024
 				&& epsPercentNextYear > 0.01) {
 			String msg = "earnings to price, current year="
 					+ epsPercentCurrentYear
