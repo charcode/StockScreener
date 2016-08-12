@@ -4,6 +4,7 @@
 	<classpathentry kind="src" path="resources"/>
 	<classpathentry kind="src" path="systest"/>
 	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="src" path="experiments"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
