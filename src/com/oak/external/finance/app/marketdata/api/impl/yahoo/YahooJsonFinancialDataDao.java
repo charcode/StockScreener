@@ -117,7 +117,7 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 					getDoubleFromYahooVal(bsd.getMinorityInterest()), // minorityInterest,
 					getDoubleFromYahooVal(bsd.getNegativeGoodwill()),  // negativeGoodwill, 
 					getDoubleFromYahooVal(bsd.getStockOptionWarrants()), // miscStocksOptionsWarrants, 
-					getDoubleFromYahooVal(bsd.getRedeemablePreferredStocks()),  // redeemablePreferredStocks, 
+					getDoubleFromYahooVal(bsd.getRedeemablePreferredStock()),  // redeemablePreferredStocks, 
 					getDoubleFromYahooVal(bsd.getCommonStock()), // commonStock, 
 					getDoubleFromYahooVal(bsd.getPreferredStock()), // preferredStock, 
 					getDoubleFromYahooVal(bsd.getRetainedEarnings()), // retainedEarnings, 
@@ -139,7 +139,6 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 		}
 		return ret;
 	}
-
 	private YahooFinancialJsonDataModel downloadFinancialData(String url) throws IOException, JsonParseException, JsonMappingException {
 		String json;
 		json = Jsoup.connect(url).ignoreContentType(true).execute().body();

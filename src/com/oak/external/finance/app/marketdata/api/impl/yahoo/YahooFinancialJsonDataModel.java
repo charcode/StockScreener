@@ -136,7 +136,7 @@ public class YahooFinancialJsonDataModel {
 					YahooLongVal minorityInterest;
 					YahooLongVal negativeGoodwill;
 //					YahooLongVal miscStocksOptionsWarrants;
-					YahooLongVal redeemablePreferredStocks;
+					YahooLongVal redeemablePreferredStock;
 					YahooLongVal totalCurrentLiabilities;
 					YahooLongVal totalLiab;
 					YahooLongVal stockOptionWarrants;

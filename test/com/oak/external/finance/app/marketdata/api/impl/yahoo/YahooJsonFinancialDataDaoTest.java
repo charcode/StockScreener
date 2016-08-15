@@ -1,5 +1,6 @@
 package com.oak.external.finance.app.marketdata.api.impl.yahoo;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,11 +15,11 @@ public class YahooJsonFinancialDataDaoTest {
 	@Test
 	public void testGetBalanceSheetForSymbol() {
 		
-		// AAPL,LCI,COP , AEL
-		String symbol = "AEL";
+		// AAPL,LCI,COP , AEL, IMH
+		String symbol = "IMH";
 		String exchange = null;
 		FinancialData financialDataForSymbol = underTest.getFinancialDataForSymbol(symbol, exchange);
-		fail();
+		assertNotNull("no financial data returned",financialDataForSymbol );
 	}
 
 }
