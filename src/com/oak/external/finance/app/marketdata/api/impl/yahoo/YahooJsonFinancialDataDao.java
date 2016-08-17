@@ -81,6 +81,9 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 		} catch (ParseException e) {
 			String msg = "Symbol: " + symbol + ", Failed while parsing: " + parsingvalue;
 			log.error(msg,e);
+		}catch(Throwable t) {
+			String msg = "Unexpected error while getting Symbol: " + symbol + ", Failed while parsing: " + parsingvalue;
+			log.error(msg,t);
 		}
 
 		return ret;
