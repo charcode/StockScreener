@@ -21,7 +21,7 @@ public class CheckPostGresConnection {
         Statement st = null;
         ResultSet rs = null;
         
-        String url = "jdbc:postgresql://localhost/testdb";
+        String url = "jdbc:postgresql://localhost:5432/testdb";
         String user = "test_java";
         String password = "easy_password";
         
