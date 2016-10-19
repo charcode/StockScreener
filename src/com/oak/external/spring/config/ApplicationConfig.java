@@ -2,16 +2,21 @@ package com.oak.external.spring.config;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.oak.api.finance.model.FinancialData;
+import com.oak.api.finance.repository.CompanyRepository;
+import com.oak.api.finance.repository.ControlRepository;
+import com.oak.api.finance.repository.SectorRepository;
 import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
 import com.oak.external.finance.app.marketdata.api.CashFlowStatementDao;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
 import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
 import com.oak.external.finance.app.marketdata.api.IncomeStatementDao;
 import com.oak.external.finance.app.marketdata.api.MarketDataProvider;
+import com.oak.external.finance.app.marketdata.api.SectorsCompaniesYahooWebDao;
 import com.oak.external.finance.app.marketdata.api.impl.MarketDataPollingProviderImpl;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConnector;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConverter;
@@ -19,9 +24,11 @@ import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooJsonFinancial
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooWebDataBalanceSheetDao;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooWebDataCashFlowStatementDao;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooWebDataIncomeStatementDao;
+import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooWebDataSectorCompaniesDao;
 import com.oak.external.finance.app.marketdata.api.yahoo.YahooDataConverterImpl;
 import com.oak.external.utils.input.api.StreamProvider;
 import com.oak.external.utils.input.api.impl.FileStreamProvider;
+import com.oak.external.utils.web.WebParsingUtils;
 import com.oak.finance.app.dao.SymbolsDao;
 import com.oak.finance.app.dao.impl.files.SymbolsFileDao;
 import com.oak.finance.app.main.server.ApplicationServer;
@@ -30,12 +37,15 @@ import com.oak.finance.app.monitor.MarketDataMonitorsController;
 import com.oak.finance.app.monitor.MarketDataMonitorsControllerImpl;
 import com.oak.finance.app.monitor.analysis.FinanceAnalysisController;
 import com.oak.finance.app.monitor.analysis.FinanceFundamentalAnalysisControllerImpl;
-import com.oak.finance.interest.SymbolProviderImpl;
-import com.oak.finance.interest.SymbolsProvider;
+import com.oak.finance.interest.SymbolsController;
+import com.oak.finance.interest.SymbolsControllerImpl;
 
 @Configuration
 public class ApplicationConfig {
 
+	@Value("sector.datasource")
+	private String sectorsUrl;
+	
 	private int waitInMilliseconds = 500;
 	private long historyBackInMilliSeconds = 7 * 24 * 60 * 60 * 1000;
 	// private String stocksFilename = "/stocks/yahoo.csv";
@@ -63,6 +73,13 @@ public class ApplicationConfig {
 	
 	private Logger log = LogManager.getLogger(ApplicationConfig.class);
 
+	@Autowired
+	private ControlRepository controlRepository;
+	@Autowired
+	private CompanyRepository companyRepository;
+	@Autowired
+	private SectorRepository sectorRepository;
+	
 	@Bean
 	ApplicationServer app() {
 		log.debug("creating app...");
@@ -74,11 +91,11 @@ public class ApplicationConfig {
 	}
 
 	@Bean
-	SymbolsProvider symbolProvider() {
+	SymbolsController symbolProvider() {
 		log.debug("creating stockListProvider...");
-		SymbolProviderImpl symbolProvider = new SymbolProviderImpl(
+		SymbolsControllerImpl symbolProvider = new SymbolsControllerImpl(
 				symbolsDao(),
-				LogManager.getFormatterLogger(SymbolProviderImpl.class));
+				sectorsCompaniesDao(), controlRepository, companyRepository, sectorRepository, LogManager.getFormatterLogger(SymbolsControllerImpl.class));
 		log.debug("creating stockListProvider...done");
 		return symbolProvider;
 	}
@@ -190,5 +207,15 @@ public class ApplicationConfig {
 				targetMinCurrentRatio, targetMinQuickRatio, targetMinAssetToDebtRatio, logger);
 		log.debug("creating financeAnalysisController...done");
 		return financeFundamentalAnalysisController;
+	}
+	
+	@Bean
+	SectorsCompaniesYahooWebDao sectorsCompaniesDao() {
+		log.debug("creating sectorDao...");
+		Logger logger = LogManager.getFormatterLogger(YahooWebDataSectorCompaniesDao.class);
+		WebParsingUtils webParsingUtils = new WebParsingUtils();
+		SectorsCompaniesYahooWebDao dao = new YahooWebDataSectorCompaniesDao(logger,sectorsUrl, webParsingUtils);
+		log.debug("creating sectorDao...done");
+		return dao;
 	}
 }

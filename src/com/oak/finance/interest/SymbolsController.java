@@ -7,7 +7,7 @@ import java.util.Set;
 import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
 
-public interface SymbolsProvider {
+public interface SymbolsController {
 	Set<String>getSymbols();
 
 	Set<String> getExcludedSymbols();

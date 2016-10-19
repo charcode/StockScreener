@@ -9,14 +9,16 @@ import lombok.Data;
 
 @Entity
 @Data
-public class Sector {
+public class Sector implements Comparable<Sector>{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;	
 	private String description;
 	private String industry;
+	private Long parentSectorId; // null when top level sector
+	private String parentSectorDescription;  // null when top level sector
 	
-	private double oneDatePriceChangePercent;
+	private double oneDayPriceChangePercent;
 	private double marketCap;
 	/**
 	 * Price to Earning Ratio
@@ -31,5 +33,20 @@ public class Sector {
 	private double priceToBookValue;
 	private double netProfitMarginPercent;
 	private double priceToFreeCashFlow;
+	
+	@Override
+	public int compareTo(Sector o) {
+		int compareTo;
+		if(description != null) {
+			compareTo = description.compareTo(o.description);
+		}else {
+			if(o.description == null) {
+				compareTo = 0;
+			}else {
+				compareTo = -1;
+			}
+		}
+		return compareTo;
+	}
 
 }

@@ -16,7 +16,7 @@ import com.oak.external.finance.app.marketdata.api.MarketDataProvider;
 import com.oak.finance.app.main.server.ApplicationServer;
 import com.oak.finance.app.main.server.ApplicationServerImpl;
 import com.oak.finance.app.monitor.MarketDataMonitorsController;
-import com.oak.finance.interest.SymbolsProvider;
+import com.oak.finance.interest.SymbolsController;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApplicationServerImplTests {
@@ -25,7 +25,7 @@ public class ApplicationServerImplTests {
 	@Mock
 	MarketDataProvider marketDataProvider ;
 	@Mock
-	SymbolsProvider stockListProvider;
+	SymbolsController stockListProvider;
 	@Mock
 	MarketDataMonitorsController marketDataMonitorsFactory;
 	@Mock

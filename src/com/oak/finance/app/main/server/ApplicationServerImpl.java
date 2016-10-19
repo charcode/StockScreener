@@ -5,14 +5,14 @@ import java.util.Set;
 import org.apache.logging.log4j.Logger;
 
 import com.oak.finance.app.monitor.MarketDataMonitorsController;
-import com.oak.finance.interest.SymbolsProvider;
+import com.oak.finance.interest.SymbolsController;
 
 public class ApplicationServerImpl implements ApplicationServer {
 	private Logger log;
-	private final SymbolsProvider symbolsProvider;
+	private final SymbolsController symbolsProvider;
 	private final MarketDataMonitorsController marketDataMonitorsController;
 	
-	public ApplicationServerImpl(SymbolsProvider symbolsProvider, MarketDataMonitorsController marketDataMonitorsController, Logger log) {
+	public ApplicationServerImpl(SymbolsController symbolsProvider, MarketDataMonitorsController marketDataMonitorsController, Logger log) {
 		this.symbolsProvider = symbolsProvider;
 		this.marketDataMonitorsController = marketDataMonitorsController;
 		this.log = log;

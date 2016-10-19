@@ -23,7 +23,7 @@ import com.oak.api.finance.model.Stock;
 import com.oak.external.finance.app.marketdata.api.MarketDataProvider;
 import com.oak.finance.app.monitor.analysis.FinanceAnalysisController;
 import com.oak.finance.app.monitor.analysis.FinanceAnalysisController.FinanceAnalysisCallback;
-import com.oak.finance.interest.SymbolsProvider;
+import com.oak.finance.interest.SymbolsController;
 
 public class MarketDataMonitorsControllerImpl implements
 	MarketDataMonitorsController {
@@ -38,13 +38,13 @@ public class MarketDataMonitorsControllerImpl implements
     private boolean stop = false;
     private final Logger logger;
     private final FinanceAnalysisController analysisController;
-    private final SymbolsProvider symbolsProvider;
+    private final SymbolsController symbolsProvider;
     private final MarketDataProvider marketDataProvider;
     private final Executor executor;
     private final StocksCallback callback;
     private final Map<Stock, Map<Date, Economic>> endMarker;
 
-    public MarketDataMonitorsControllerImpl(SymbolsProvider symbolsProvider,
+    public MarketDataMonitorsControllerImpl(SymbolsController symbolsProvider,
 	    FinanceAnalysisController analysisController,
 	    MarketDataProvider marketDataProvider, Logger logger) {
 	logger.debug("creating MarketDataMonitorsControllerImpl");
