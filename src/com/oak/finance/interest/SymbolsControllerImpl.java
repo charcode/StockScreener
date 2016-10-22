@@ -4,11 +4,17 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +26,7 @@ import com.oak.api.finance.model.Stock;
 import com.oak.api.finance.model.dto.Company;
 import com.oak.api.finance.model.dto.Control;
 import com.oak.api.finance.model.dto.ControlType;
+import com.oak.api.finance.model.dto.Sector;
 import com.oak.api.finance.repository.CompanyRepository;
 import com.oak.api.finance.repository.ControlRepository;
 import com.oak.api.finance.repository.SectorRepository;
@@ -86,10 +93,127 @@ public class SymbolsControllerImpl implements SymbolsController {
 
 	private void refrehSymbols() {
 		SectorsIndustriesCompanies sectorsAndCompanies = sectorCompaniesDao.getSectorsAndCompanies();
+		Set<Sector> allRefreshedSectorsAndIndustries = sectorsAndCompanies.sectors();
+		Stream<Sector> sectors = filterSectors(allRefreshedSectorsAndIndustries);// choose sector without parent (not industries)
+		log.info("saving sectors");
+		Iterable<Sector> savedSectorsAndIndustries = sectorRepository.findAll();
+		Set<Sector> unsavedSectors = findUnsavedSectors(sectors, savedSectorsAndIndustries);
+		
+		sectorRepository.save(unsavedSectors);
+		savedSectorsAndIndustries = sectorRepository.findAll();
+
+		List<Sector> industries = wireSectorsAndIndustries(savedSectorsAndIndustries);	
+		sectorRepository.save(allRefreshedSectorsAndIndustries);
+		Map<String, Sector> industriesByDescription = industries.stream().collect(Collectors.toMap(Sector::getDescription, Function.identity()));
+
 		Set<Company> companies = sectorsAndCompanies.companies();
-		companyRepository.save(companies);
-		sectorRepository.save(sectorsAndCompanies.sectors());
-		sectorRepository.save(sectorsAndCompanies.industries());		
+		Iterable<Company> savedCompanies = companyRepository.findAll();
+		Set<Company> companiesToSave = findUnsavedCompanies(companies,savedCompanies);
+		companies.stream().forEach(c -> setIndustryAndSectorId(c,industriesByDescription));
+		
+		log.info("saving industries");
+		sectorRepository.save(industries);		
+		log.info("saving companies");
+		companyRepository.save(companiesToSave);
+		log.info("done refreshing sectors, industries and companies");
+	}
+
+	private Set<Company> findUnsavedCompanies(Set<Company> companies, Iterable<Company> savedCompanies) {
+		Set<Company> ret = new HashSet<>();
+		Map<String, Long> grouped = companies.stream().collect(Collectors.groupingBy(c -> c.getTicker() ,Collectors.counting()));
+
+		Set<String>duplicatedTickers = new HashSet<String>();
+		for(String ticker:grouped.keySet()) {
+			if(grouped.get(ticker)>1) {
+				duplicatedTickers.add(ticker);
+			}
+		}
+		Set<Company> problematicCompanies = companies.stream()
+		.filter(c-> duplicatedTickers.contains(c.getTicker()))
+		.collect(Collectors.toSet());
+		if(!problematicCompanies.isEmpty()) {
+			companies.removeAll(problematicCompanies);
+		}
+		
+		Map<String, Company> companiesByTicker = StreamSupport.stream(companies.spliterator(),false)
+				.collect(Collectors.toMap(Company::getTicker, Function.identity()));
+		
+		companies.forEach(n -> {
+			// check if it exists already
+			if(companiesByTicker.containsKey(n.getDescription())) {
+				// already exist - check relevant data
+				Company existing = companiesByTicker.get(n.getDescription());
+				if(!existing.equals(n)) {
+					n.setId(existing.getId());
+					ret.add(n);
+				}
+			}else {
+				ret.add(n);
+			}
+		});
+		return ret;
+	}
+
+	private Set<Sector> findUnsavedSectors(Stream<Sector> sectors,
+			Iterable<Sector> allSectorsAndIndustries) {
+		Set<Sector> ret = new HashSet<>();
+		Map<String, Sector> sectorsByDescription = StreamSupport.stream(allSectorsAndIndustries.spliterator(),false)
+		.collect(Collectors.toMap(Sector::getDescription, Function.identity()));
+		
+		sectors.forEach(n -> {
+			// check if it exists already
+			if(sectorsByDescription.containsKey(n.getDescription())) {
+				// already exist - check relevant data
+				Sector existing = sectorsByDescription.get(n.getDescription());
+				if(!existing.equals(n)) {
+					n.setId(existing.getId());
+					ret.add(n);
+				}
+			}else {
+				ret.add(n);
+			}
+		});
+		return ret;
+	}
+
+	private void setIndustryAndSectorId(Company c, Map<String, Sector> industriesByDescription) {
+		Sector sector = industriesByDescription.get(c.getSectorDescription());
+		Sector industry = industriesByDescription.get(c.getIndustryDescription());
+		if(sector != null && sector.getId() != null) {
+			c.setSectorId(sector.getId());
+		}
+		if(industry != null && industry.getId() != null) {
+			c.setIndustryId(industry.getId());
+		}
+	}
+
+	private List<Sector> wireSectorsAndIndustries(Iterable<Sector> allSectorsAndIndustries) {
+		Map<String,Sector> sectors = filterSectors(allSectorsAndIndustries)
+			.collect(Collectors.toMap(Sector::getDescription,Function.identity()));
+		List<Sector> industries = StreamSupport.stream(allSectorsAndIndustries.spliterator(), false)
+			.filter(s -> s.getParentSectorId() != null /*designate a industry*/)
+			.collect(Collectors.toList());
+		industries.stream().forEach(s -> setIndustrySectorId(s,sectors))
+			;
+		return industries;
+	}
+
+	private Stream<Sector> filterSectors(Iterable<Sector> allSectorsAndIndustries) {
+		return StreamSupport.stream(allSectorsAndIndustries.spliterator(), false)
+			.filter(s -> isSector(s) /*designate a sector*/);
+	}
+
+	private boolean isSector(Sector s) {
+		return s.getParentSectorId() == null;
+	}
+
+	private void setIndustrySectorId(Sector s, Map<String,Sector> allSectorsAndIndustries) {
+		Sector sector = allSectorsAndIndustries.get(
+				s.getParentSectorDescription()
+		);
+		if(sector.getId()!=null) {
+			s.setParentSectorId(sector.getId());
+		}
 	}
 
 	@Override

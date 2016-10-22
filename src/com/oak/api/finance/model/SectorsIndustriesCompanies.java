@@ -33,14 +33,18 @@ public class SectorsIndustriesCompanies {
 		if(!companiesPerIndustry.containsKey(industry)) {
 			companiesPerIndustry.put(industry, new ConcurrentSkipListSet<>());
 		}
-		company.setIndustryId(industry.getId());
+		Long id = industry.getId();
+		if (id != null) {
+			company.setIndustryId(id);
+		}
 		company.setIndustryDescription(industry.getDescription());
-		company.setSectorId(industry.getParentSectorId());
+		Long parentSectorId = industry.getParentSectorId();
+		if (parentSectorId != null) {
+			company.setSectorId(parentSectorId);
+		}
 		company.setSectorDescription(industry.getParentSectorDescription());
-		companiesPerIndustry.get(industry).add(company);
-	}
-	public void addCompaniesToIndustry(Sector industry, Set<Company> company) {
-		addToList(companiesPerIndustry,industry,company);
+		Set<Company> companies = companiesPerIndustry.get(industry);
+		companies.add(company);
 	}
 
 	public Set<Sector> sectors(){
@@ -65,7 +69,7 @@ public class SectorsIndustriesCompanies {
 		return ret;
 	}
 	
-	private  <T> void addToList(Map<Sector,Set<T>>map,Sector key,Set<T> elements){
+	private  <K,T> void addToList(Map<K,Set<T>>map,K key,Set<T> elements){
 		if(!map.containsKey(key)) {
 			map.put(key, new ConcurrentSkipListSet<>(elements));
 		}else {
