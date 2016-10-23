@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.oak.api.finance.repository.CompanyRepository;
+import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
 import com.oak.api.finance.repository.SectorRepository;
 import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
@@ -78,6 +79,8 @@ public class ApplicationConfig {
 	@Autowired
 	private CompanyRepository companyRepository;
 	@Autowired
+	private CompanyWithProblemsRepository companyWithProblemsRepository;
+	@Autowired
 	private SectorRepository sectorRepository;
 	
 	@Bean
@@ -94,8 +97,10 @@ public class ApplicationConfig {
 	SymbolsController symbolProvider() {
 		log.debug("creating stockListProvider...");
 		SymbolsControllerImpl symbolProvider = new SymbolsControllerImpl(
-				symbolsDao(),
-				sectorsCompaniesDao(), controlRepository, companyRepository, sectorRepository, LogManager.getFormatterLogger(SymbolsControllerImpl.class));
+				symbolsDao(), sectorsCompaniesDao(), 
+				controlRepository, companyRepository, 
+				companyWithProblemsRepository, sectorRepository, 
+				LogManager.getFormatterLogger(SymbolsControllerImpl.class));
 		log.debug("creating stockListProvider...done");
 		return symbolProvider;
 	}

@@ -12,6 +12,7 @@ import lombok.Data;
 @Data
 @Entity
 public class CompanyWithProblems {
+	
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO) 
 	private Long id;
@@ -24,4 +25,5 @@ public class CompanyWithProblems {
 	private String industryDescription;
 	private Date errorDate;
 	private String problem;
+	private ErrorType errorType;
 }

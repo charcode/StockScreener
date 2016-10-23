@@ -70,17 +70,24 @@ public class YahooWebDataSectorCompaniesDao implements SectorsCompaniesYahooWebD
 						String desc = cmpnyAsSector.getDescription();
 						if (!desc.startsWith("Sector:") && !desc.startsWith("Industry:")) {
 							try {
-								String companyUrl = companiesUrl.get(cmpnyAsSector);
+//								String companyUrl = companiesUrl.get(cmpnyAsSector);
 								Company company = new Company();
-								String[] tokens = desc.split("\\(");
-								String name = tokens[0];
-								String[] another = tokens[1].split("\\)");
-								String ticker = another[0];
+								int st = desc.lastIndexOf("(");
+								int et = 0;
+								if(st > 0) {
+									et = st - 1;
+								}
+								String name = desc.substring(0, et);
+								String ticker = desc.substring(st+1, desc.length() - 1);
+//								String[] tokens = desc.split("\\(");
+//								String name = tokens[0];
+//								String[] another = tokens[1].split("\\)");
+//								String ticker = another[0];
 								company.setName(name);
 								company.setTicker(ticker);
 								ret.addCompanyToIndustry(industry, company);
 							} catch (Throwable t) {
-								log.error("cannot split this: " + desc, t);
+								log.error(industryUrl + " : cannot split this: " + desc, t);
 							}
 						}
 					}
@@ -136,11 +143,7 @@ public class YahooWebDataSectorCompaniesDao implements SectorsCompaniesYahooWebD
 							s.setLongTermDebtToEquity( parseDouble(tr.get(6))); //"Long-Term Debt to Equity"
 							s.setPriceToBookValue( parseDouble(tr.get(7))); //"Price to Book Value"
 							s.setNetProfitMarginPercent( parseDouble(tr.get(8))); //"Net Profit Margin % (mrq)"
-							if(tr.size()<10) {
-								System.out.println(s);
-							}
-							
-//							s.setPriceToFreeCashFlow( parseDouble(tr.get(9))); //"Price to Free Cash Flow (mrq)"
+							s.setPriceToFreeCashFlow( parseDouble(tr.get(9))); //"Price to Free Cash Flow (mrq)"
 							
 							Elements sectorUrl = sector.select("a");
 							if(! sectorUrl.isEmpty()) {

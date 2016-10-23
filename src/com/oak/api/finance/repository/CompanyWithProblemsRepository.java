@@ -7,6 +7,6 @@ import com.oak.api.finance.model.dto.CompanyWithProblems;
 
 @RepositoryRestResource(collectionResourceRel = "company_with_problems", path = "companies")
 
-public interface CompanyWithProblemRepository extends PagingAndSortingRepository<CompanyWithProblems, Long> {
+public interface CompanyWithProblemsRepository extends PagingAndSortingRepository<CompanyWithProblems, Long> {
 
 }
