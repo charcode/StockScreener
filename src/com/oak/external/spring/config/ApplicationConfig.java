@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import com.oak.api.finance.repository.CompanyRepository;
 import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
+import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
 import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
 import com.oak.external.finance.app.marketdata.api.CashFlowStatementDao;
@@ -65,6 +66,7 @@ public class ApplicationConfig {
 	// private String stocksWithNoPriceFileName=
 	// "/stocks/stocksWithNoPrice.txt";
 	private String stocksWithNoPriceFileName = ROOT_PATH + "stocksWithNoPrice.txt";
+//	private String stocksToWatch = ROOT_PATH + "watchList_persist.csv";
 	private String stocksToWatch = ROOT_PATH + "watchList.csv";
 	// private String stocksToWatch =
 	// "C:\\Users\\charb_000\\Documents\\invest\\data\\test_watchList.csv";
@@ -82,27 +84,29 @@ public class ApplicationConfig {
 	private CompanyWithProblemsRepository companyWithProblemsRepository;
 	@Autowired
 	private SectorRepository sectorRepository;
+	@Autowired
+	private Screen0ResultsRepository screeningResultsRepository;
 	
 	@Bean
 	ApplicationServer app() {
 		log.debug("creating app...");
 		ApplicationServerImpl applicationServer = new ApplicationServerImpl(
-				symbolProvider(), marketDataMonitorsController(),
-				LogManager.getFormatterLogger(ApplicationServerImpl.class));
+				symbolController(), marketDataMonitorsController(),
+				screeningResultsRepository, LogManager.getFormatterLogger(ApplicationServerImpl.class));
 		log.debug("creating app...done");
 		return applicationServer;
 	}
 
 	@Bean
-	SymbolsController symbolProvider() {
+	SymbolsController symbolController() {
 		log.debug("creating stockListProvider...");
-		SymbolsControllerImpl symbolProvider = new SymbolsControllerImpl(
+		SymbolsControllerImpl symbolController = new SymbolsControllerImpl(
 				symbolsDao(), sectorsCompaniesDao(), 
 				controlRepository, companyRepository, 
 				companyWithProblemsRepository, sectorRepository, 
-				LogManager.getFormatterLogger(SymbolsControllerImpl.class));
+				screeningResultsRepository, LogManager.getFormatterLogger(SymbolsControllerImpl.class));
 		log.debug("creating stockListProvider...done");
-		return symbolProvider;
+		return symbolController;
 	}
 
 	@Bean
@@ -110,7 +114,7 @@ public class ApplicationConfig {
 		log.debug("creating streamProvider...");
 		// ResourceFileStreamProvider resourceFileStreamProvider = new
 		// ResourceFileStreamProvider(stocksFilename,
-		// LogManager.getFormatterLogger(ResourceFileStreamProvider.class));
+		// LogManager.getFormattesrLogger(ResourceFileStreamProvider.class));
 		StreamProvider streamProvider = new FileStreamProvider(stocksFilename,
 				LogManager.getFormatterLogger(FileStreamProvider.class));
 		log.debug("creating streamProvider...done");
@@ -164,7 +168,7 @@ public class ApplicationConfig {
 	MarketDataMonitorsController marketDataMonitorsController() {
 		log.debug("creating marketDataMonitorsController...");
 		MarketDataMonitorsController marketDataMonitorsController = new MarketDataMonitorsControllerImpl(
-				symbolProvider(),
+				symbolController(),
 				financeAnalysisController(),
 				marketDataProvider(),
 				LogManager
