@@ -16,6 +16,7 @@ public class Company implements Comparable<Company>{
 	
 	private String name;
 	private String ticker;
+	private String exchange;
 	private String description;
 	
 	private Long sectorId;

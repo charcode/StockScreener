@@ -4,9 +4,12 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +25,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.StreamUtils;
 
 import com.oak.api.finance.model.Economic;
@@ -40,6 +44,7 @@ import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
+import com.oak.external.finance.app.marketdata.api.DataConnector;
 import com.oak.external.finance.app.marketdata.api.SectorsCompaniesYahooWebDao;
 import com.oak.finance.app.dao.SymbolsDao;
 
@@ -57,11 +62,18 @@ public class SymbolsControllerImpl implements SymbolsController {
 	private final SectorRepository sectorRepository;
 	private final Logger log;
 	private final Period maxTimeBeforeRefresh = Period.ofMonths(3);
-	private final 
-	Screen0ResultsRepository screeningResultsRepository;
+	private final Screen0ResultsRepository screeningResultsRepository;
+	@Autowired
+	private DataConnector dataConnector;
+	@Autowired
+	private CompanyRepository newCompRep;
+	@Autowired
+	private Screen0ResultsRepository newResRep;
+
 	public SymbolsControllerImpl(SymbolsDao symbolsDao, SectorsCompaniesYahooWebDao sectorCompaniesDao,
 			ControlRepository controlRepository, CompanyRepository companyRepository,
-			CompanyWithProblemsRepository companyWithErrorsRepository, SectorRepository sectorRepository, Screen0ResultsRepository screeningResultsRepository, Logger log) {
+			CompanyWithProblemsRepository companyWithErrorsRepository, SectorRepository sectorRepository,
+			Screen0ResultsRepository screeningResultsRepository, Logger log) {
 		this.symbolsTextFileDao = symbolsDao;
 		this.sectorCompaniesDao = sectorCompaniesDao;
 		this.controlRepository = controlRepository;
@@ -78,36 +90,193 @@ public class SymbolsControllerImpl implements SymbolsController {
 		this.log = mylog;
 	}
 
+	/**
+	 * Maintenance code that copies summary results of previous runs from csv to
+	 * db
+	 */
 	private void populateExistingResultsInDb() {
 		Iterable<Screen0Result> savedResults = screeningResultsRepository.findAll();
-		SortedMap<Date, List<Screen0Result>> resultsByDate =new TreeMap<>(StreamUtils.createStreamFromIterator(savedResults.iterator())
-			.collect(Collectors.groupingBy(Screen0Result::getRunDate)));
+		SortedMap<Date, List<Screen0Result>> resultsByDate = new TreeMap<>(
+				StreamUtils.createStreamFromIterator(savedResults.iterator())
+						.collect(Collectors.groupingBy(Screen0Result::getRunDate)));
 		Date firstResult;
-		if(!resultsByDate.isEmpty()) {
-		 firstResult= resultsByDate.firstKey();
-		}else {
+		if (!resultsByDate.isEmpty()) {
+			firstResult = resultsByDate.firstKey();
+		} else {
 			firstResult = null;
 		}
-		
-		if(firstResult != null &&  firstResult.toInstant()
-				.isAfter(
-						 new GregorianCalendar(2014, 2, 11).toInstant()
-						)){
+
+		if (firstResult != null && firstResult.toInstant().isAfter(new GregorianCalendar(2014, 2, 11).toInstant())) {
 			// nothing to do
 			log.info("results in db are up-to-date");
-		}else {
+		} else {
 			// need to back fill the result
-			Collection<Screen0Result> results =retriedLegacyResultsFromFile();
+			Collection<Screen0Result> results = retriedLegacyResultsFromFile();
 			screeningResultsRepository.save(results);
-	
+
 		}
+	}
+
+	/**
+	 * Maintenance for cleaning up wrong dividend yield and market cap fields
+	 */
+	private void cleanupMarketCapAndYieldDividenInExistingResultsInDb() {
+		Iterable<Screen0Result> results = screeningResultsRepository.findAll();
+		List<Screen0Result> wrongResults = StreamUtils.createStreamFromIterator(results.iterator())
+				.filter(r -> r.getMarketCap() < r.getDividendYield()).collect(Collectors.toList());
+		wrongResults.stream().forEach(r -> {
+			Double yld = r.getDividendYield();
+			r.setDividendYield(r.getMarketCap());
+			r.setMarketCap(yld);
+		});
+		screeningResultsRepository.save(wrongResults);
+	}
+
+	private void addExchangeToCompaniesAndPriceToResult() {
+		saveExchangeToCompanies();
+
+		// Iterable<Screen0Result> results =
+		// screeningResultsRepository.findAll();
+		//
+		// savePriceWithResult(results);
+	}
+
+	private void saveExchangeToCompanies() {
+		Iterable<Company> companies = companyRepository.findAll();
+		Set<String> cmpnies = StreamUtils.createStreamFromIterator(companies.iterator()).map(c -> c.getTicker())
+				.collect(Collectors.toSet());
+		// stock exch date price
+		Map<Pair<String, String>, Map<Date, Double>> companiesExchangePrice = getMarketData(cmpnies, null);
+		saveNewCompanies(companies, companiesExchangePrice);
+	}
+
+	private void savePriceWithResult(Iterable<Screen0Result> results) {
+		Map<Date, List<Screen0Result>> resultByDate = StreamUtils.createStreamFromIterator(results.iterator())
+				.collect(Collectors.groupingBy(Screen0Result::getRunDate));
+		for (Date d : resultByDate.keySet()) {
+			Set<Screen0Result> newResults = new HashSet<>();
+			List<Screen0Result> resList = resultByDate.get(d);
+			Set<String> ticks = resList.stream().map(r -> r.getTicker()).collect(Collectors.toSet());
+			Map<String, List<Screen0Result>> resPerStockPerDate = resList.stream()
+					.collect(Collectors.groupingBy(Screen0Result::getTicker));
+
+			Map<Pair<String, String>, Map<Date, Double>> marketData = getMarketData(ticks, d);
+			for (Pair<String, String> stEx : marketData.keySet()) {
+				Map<Date, Double> map = marketData.get(stEx);
+				for (Date date : map.keySet()) {
+					try {
+						Double price = map.get(date);
+						for (Screen0Result r : resPerStockPerDate.get(stEx.getKey())) {
+
+							Screen0Result nr = new Screen0Result();
+							nr.setId(r.getId());
+							nr.setPrice(price);
+							nr.setBookValuePerShare(r.getBookValuePerShare());
+							nr.setCompanyName(r.getCompanyName());
+							nr.setCurrency(r.getCurrency());
+							nr.setDividendYield(r.getDividendYield());
+							nr.setEps(r.getEps());
+							nr.setEpsEstNextQuarter(r.getEpsEstNextQuarter());
+							nr.setEpsEstNextYear(r.getEpsEstNextYear());
+							nr.setEpsEstThisYear(r.getEpsEstThisYear());
+							nr.setExchangeCode(r.getExchangeCode());
+							nr.setMarketCap(r.getMarketCap());
+							nr.setPeg(r.getPeg());
+							nr.setPer(r.getPer());
+							nr.setPerCalculated(r.getPerCalculated());
+							nr.setPriceBid(r.getPriceBid());
+							nr.setRunDate(r.getRunDate());
+							nr.setTargetPrice(r.getTargetPrice());
+							nr.setTicker(r.getTicker());
+
+							newResults.add(nr);
+						}
+					} catch (Exception e) {
+						log.error("somehting went wrong ", e);
+					}
+				}
+			}
+			newResRep.save(newResults);
+		}
+	}
+
+	private void saveNewCompanies(Iterable<Company> companies,
+			Map<Pair<String, String>, Map<Date, Double>> companiesExchangePrice) {
+		Map<String, String> companyExchMap = companiesExchangePrice.keySet().stream()
+				.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+
+		Set<Company> newCompanies = StreamUtils.createStreamFromIterator(companies.iterator())
+				.map(c -> cloneCompanyAndAssignExchange(c, companyExchMap)).collect(Collectors.toSet());
+
+		newCompRep.save(newCompanies);
+	}
+
+	private Company cloneCompanyAndAssignExchange(Company c, Map<String, String> companyExchMap) {
+
+		Company c0 = new Company();
+		c0.setId(c.getId());
+		c0.setDescription(c.getDescription());
+		c0.setExchange(companyExchMap.get(c.getTicker()));
+		c0.setIndustryDescription(c.getIndustryDescription());
+		c0.setIndustryId(c.getIndustryId());
+		c0.setName(c.getName());
+		c0.setSectorDescription(c.getSectorDescription());
+		c0.setSectorId(c.getSectorId());
+		c0.setTicker(c.getTicker());
+		return c0;
+
+	}
+
+	private <T> Collection<Set<T>> batch(Set<T> set, int size) {
+		Collection<Set<T>> ret = null;
+
+		if (set != null) {
+			ret = new ArrayList<Set<T>>();
+			int i = 0;
+			Set<T> batch = new HashSet<T>();
+			for (T e : set) {
+				batch.add(e);
+				if (i >= size - 1) {
+					ret.add(batch);
+					batch = new HashSet<T>();
+					i = 0;
+				} else {
+					i++;
+				}
+			}
+			if (!batch.isEmpty()) {
+				ret.add(batch);
+			}
+		}
+		return ret;
+	}
+
+	private Map<Pair<String, String>, Map<Date, Double>> getMarketData(Set<String> symbolList, Date date) {
+		Collection<Set<String>> batches = batch(symbolList, 10);
+		Map<Pair<String, String>, Map<Date, Double>> pricePerDatePerSock = new HashMap<>();
+		for (Set<String> batch : batches) {
+			Map<Stock, Map<Date, Economic>> batchResult = dataConnector.getEconomics(batch, date);
+			for (Stock s : batchResult.keySet()) {
+				Map<Date, Economic> economyMaps = batchResult.get(s);
+				Map<Date, Double> m = new HashMap<>();
+				pricePerDatePerSock.put(Pair.of(s.getSymbol(), s.getStockExchange()), m);
+				for (Date d : economyMaps.keySet()) {
+					Economic e = economyMaps.get(d);
+					m.put(d, e.getBid());
+				}
+			}
+		}
+		return pricePerDatePerSock;
+
 	}
 
 	@Override
 	public Set<String> getSymbols() {
-		
-		populateExistingResultsInDb();
-		
+		/*
+		addExchangeToCompaniesAndPriceToResult();
+	    cleanupExistingResultsInDb(); 
+	    populateExistingResultsInDb();
+		 */
 		Collection<Control> symbolAndSectorRefresh = controlRepository.findByType(ControlType.SYMBOL_SECTOR_REFRESH);
 		boolean symbolsReloadNeeded = true;
 		if (symbolAndSectorRefresh != null && !symbolAndSectorRefresh.isEmpty()) {
@@ -121,7 +290,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 						break;
 					}
 				}
-				if(lastRefresh != null) {
+				if (lastRefresh != null) {
 					break;
 				}
 			}
@@ -248,6 +417,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 				Company existing = companiesByTicker.get(n.getTicker());
 				if (!existing.equals(n)) {
 					n.setId(existing.getId());
+					n.setExchange(existing.getExchange());
 					ret.add(n);
 				}
 			} else {
@@ -360,14 +530,14 @@ public class SymbolsControllerImpl implements SymbolsController {
 
 	@Override
 	public void saveGoodValueStock(Stock stock, Map<Date, Economic> economics) {
-		// to do // replace this with 
-		//TODO replace this with the Screen0ResultRepository;
+		// to do // replace this with
+		// TODO replace this with the Screen0ResultRepository;
 		symbolsTextFileDao.saveGoodValueStock(stock, economics);
-		 Screen0Result res = convertToScreen0Result(stock, economics);
-		 screeningResultsRepository.save(res);
+		Screen0Result res = convertToScreen0Result(stock, economics);
+		screeningResultsRepository.save(res);
 	}
-	
-	private Screen0Result convertToScreen0Result(Stock stock, Map<Date,Economic>economics) {
+
+	private Screen0Result convertToScreen0Result(Stock stock, Map<Date, Economic> economics) {
 		DateFormat df = new SimpleDateFormat();
 		Screen0Result res = new Screen0Result();
 		for (Date date : economics.keySet()) {
@@ -388,7 +558,8 @@ public class SymbolsControllerImpl implements SymbolsController {
 			res.setEpsEstNextYear(e.getEpsEstimateNextYear());
 			res.setMarketCap(e.getMarketCap());
 			res.setDividendYield(e.getAnnualDividendYieldPercent());
-			res.setTargetPrice(e.getOneYearTargetPrice());			
+			res.setTargetPrice(e.getOneYearTargetPrice());
+			res.setPrice(e.getBid());
 		}
 		return res;
 	}

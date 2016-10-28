@@ -48,5 +48,5 @@ public class Screen0Result {
 	private Double dividendYield;
 	@Column(name = "price_trgt")
 	private Double targetPrice;
-	
+	private Double price;
 }
