@@ -6,22 +6,32 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@Data @NoArgsConstructor
+@Data 
+@NoArgsConstructor
 public class YahooFinancialJsonDataModel {
-	
-	@Data @NoArgsConstructor public static class QuoteSummary{
-		@Data public static class Result{
+	@Data 
+	@NoArgsConstructor 
+	public static class QuoteSummary{
+		@Data 
+		public static class Result{
 			public Result() {}
-			@Data @NoArgsConstructor public static class YahooVal{
+			@Data 
+			@NoArgsConstructor 
+			public static class YahooVal{
 				Double raw;
 				String fmt;
 			}
 			
-			@Data  @EqualsAndHashCode(callSuper=true) @NoArgsConstructor public static class YahooLongVal extends YahooVal{
+			@Data  
+			@EqualsAndHashCode(callSuper=true) 
+			@NoArgsConstructor 
+			public static class YahooLongVal extends YahooVal{
 				String longFmt;
 			}
 			
-			@Data @NoArgsConstructor public static class CashflowStatement{
+			@Data 
+			@NoArgsConstructor 
+			public static class CashflowStatement{
 				Long maxAge;
 				YahooVal endDate;
 				YahooLongVal netIncome;
@@ -45,14 +55,20 @@ public class YahooFinancialJsonDataModel {
 				YahooLongVal dividendsPaid;
 			}
 			
-			@Data @NoArgsConstructor public static class CashflowStatementHistory{
+			@Data 
+			@NoArgsConstructor 
+			public static class CashflowStatementHistory{
 				List<CashflowStatement>cashflowStatements;
 				Long maxAge;
 				
 			}
 
-			@Data @NoArgsConstructor public static class IncomeStatementHistory {
-				@Data @NoArgsConstructor public static class IncomeStatement {
+			@Data 
+			@NoArgsConstructor 
+			public static class IncomeStatementHistory {
+				@Data 
+				@NoArgsConstructor 
+				public static class IncomeStatement {
 					Long maxAge;
 					YahooVal endDate;
 					YahooLongVal totalRevenue;
@@ -83,9 +99,15 @@ public class YahooFinancialJsonDataModel {
 				Long maxAge;
 			}
 			
-			@Data @NoArgsConstructor public static class Earnings{
-				@Data @NoArgsConstructor public static class EarningsChart {
-					@Data @NoArgsConstructor public static class Earning{
+			@Data 
+			@NoArgsConstructor 
+			public static class Earnings{
+				@Data 
+				@NoArgsConstructor 
+				public static class EarningsChart {
+					@Data 
+					@NoArgsConstructor 
+					public static class Earning{
 						String date;
 						YahooVal actual;
 						YahooVal estimate;
@@ -95,8 +117,12 @@ public class YahooFinancialJsonDataModel {
 					String currentQuarterEstimateDate;
 					Integer currentQuarterEstimateYear;
 				}
-				@Data @NoArgsConstructor public static class FinancialsChart{
-					@Data @NoArgsConstructor public static class Financial{
+				@Data 
+				@NoArgsConstructor 
+				public static class FinancialsChart{
+					@Data 
+					@NoArgsConstructor 
+					public static class Financial{
 						String date;
 						YahooLongVal revenue;
 						YahooLongVal earnings;
@@ -109,8 +135,12 @@ public class YahooFinancialJsonDataModel {
 				FinancialsChart financialsChart;
 			}
 			
-			@Data @NoArgsConstructor public static class BalanceSheetHistory{
-				@Data @NoArgsConstructor public static class BalanceSheetData
+			@Data 
+			@NoArgsConstructor 
+			public static class BalanceSheetHistory{
+				@Data 
+				@NoArgsConstructor 
+				public static class BalanceSheetData
 				{
 					Long maxAge;
 					YahooVal endDate;
