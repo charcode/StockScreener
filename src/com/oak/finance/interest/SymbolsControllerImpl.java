@@ -534,6 +534,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 		// TODO replace this with the Screen0ResultRepository;
 		symbolsTextFileDao.saveGoodValueStock(stock, economics);
 		Screen0Result res = convertToScreen0Result(stock, economics);
+		log.info("Saving to db "+res);
 		screeningResultsRepository.save(res);
 	}
 
