@@ -531,7 +531,6 @@ public class SymbolsControllerImpl implements SymbolsController {
 	@Override
 	public void saveGoodValueStock(Stock stock, Map<Date, Economic> economics) {
 		// to do // replace this with
-		// TODO replace this with the Screen0ResultRepository;
 		symbolsTextFileDao.saveGoodValueStock(stock, economics);
 		Screen0Result res = convertToScreen0Result(stock, economics);
 		log.info("Saving to db "+res);
