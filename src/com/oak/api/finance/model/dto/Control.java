@@ -3,6 +3,8 @@ package com.oak.api.finance.model.dto;
 import java.sql.Date;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -17,8 +19,10 @@ public class Control implements Comparable<Control>{
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 	
+	@Enumerated(EnumType.STRING)
 	private ControlType type;
 	private Date timeStamp;
+	@Enumerated(EnumType.STRING)
 	private Status status;
 	private String comments;
 	@Override

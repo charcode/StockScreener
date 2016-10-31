@@ -17,24 +17,22 @@ import com.oak.api.finance.model.FinancialAnalysis;
 import com.oak.api.finance.model.FinancialAnalysis.Acceptance;
 import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
 import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
+import com.oak.external.finance.app.marketdata.api.FinancialStatementsProvider;
 import com.oak.api.finance.model.FinancialComment;
 import com.oak.api.finance.model.FinancialComment.CommentType;
 import com.oak.api.finance.model.FinancialData;
 import com.oak.api.finance.model.Stock;
 
-public class FinanceFundamentalAnalysisControllerImpl implements
-		FinanceAnalysisController {
+public class FinanceFundamentalAnalysisControllerImpl implements FinanceAnalysisController {
 	private final Logger log;
-	private final FinancialDataDao financialDataDao;
+	private final FinancialStatementsProvider financialStatementsProvider;
 	private final double targetMinCurrentRatio;
 	private final double targetMinQuickRatio;
 	private final double targetMinAssetToDebtRatio;
 
-	public FinanceFundamentalAnalysisControllerImpl(
-			FinancialDataDao financialDataDao,
-			double targetMinCurrentRatio, double targetMinQuickRatio,
-			double targetMinAssetToDebtRatio, Logger log) {
-		this.financialDataDao = financialDataDao;
+	public FinanceFundamentalAnalysisControllerImpl(FinancialStatementsProvider financialStatementsProvider, double targetMinCurrentRatio,
+			double targetMinQuickRatio, double targetMinAssetToDebtRatio, Logger log) {
+		this.financialStatementsProvider = financialStatementsProvider;
 		this.log = log;
 		this.targetMinCurrentRatio = targetMinCurrentRatio;
 		this.targetMinQuickRatio = targetMinQuickRatio;
@@ -42,8 +40,8 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 	}
 
 	@Override
-	public void onEconomicsUpdate(FinanceAnalysisCallback callback,
-			Stock stock, Map<Date, Economic> economics, Set<String> alwaysWatch) {
+	public void onEconomicsUpdate(FinanceAnalysisCallback callback, Stock stock, Map<Date, Economic> economics,
+			Set<String> alwaysWatch) {
 
 		for (Date d : economics.keySet()) {
 			Economic e = economics.get(d);
@@ -59,21 +57,20 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 			} else {
 				FinancialAnalysis stockAnalysis = getStockAnalysis(e, stock);
 				if (stockAnalysis.getAcceptance().equals(Acceptance.STRONG_BUY)) {
-					
+
 					SortedMap<Date, Double> assetToDebtRatios = stockAnalysis.getAssetToDebtRatiosAnnual();
-					if(!assetToDebtRatios.isEmpty()) {
+					if (!assetToDebtRatios.isEmpty()) {
 						Date latestDate = assetToDebtRatios.lastKey();
 						Double assetToDebt = assetToDebtRatios.get(latestDate);
-						log.debug("Stock to watch, Strong Buy!! " + stock.getSymbol()
-								+ ", per = " + per + ", Debt ratio on "
-								+ latestDate + ": " + assetToDebt);
+						log.debug("Stock to watch, Strong Buy!! " + stock.getSymbol() + ", per = " + per
+								+ ", Debt ratio on " + latestDate + ": " + assetToDebt);
 
 						callback.onBuy(stock, economics, stockAnalysis);
-					}else {
-						log.debug("Stock is strong buy " + stock.getSymbol()
-								+ ", per = " + per + ", but no debt ratios available");
+					} else {
+						log.debug("Stock is strong buy " + stock.getSymbol() + ", per = " + per
+								+ ", but no debt ratios available");
 					}
-				}else if (stockAnalysis.getAcceptance().equals(Acceptance.BUY)) {
+				} else if (stockAnalysis.getAcceptance().equals(Acceptance.BUY)) {
 					log.debug("Stock to watch " + stock + ", per = " + per);
 
 					callback.onBuy(stock, economics, stockAnalysis);
@@ -84,7 +81,8 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 					callback.onWatchList(stock, economics, stockAnalysis);
 				}
 			}
-			// log.debug("finished processing "+symbol+", bid: "+bid+", eps:"+eps+", per:"+per);
+			// log.debug("finished processing "+symbol+", bid: "+bid+",
+			// eps:"+eps+", per:"+per);
 		}
 
 	}
@@ -110,90 +108,88 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 			Double epsEstimateCurrentYear = e.getEpsEstimateCurrentYear();
 			Double epsEstimateNextQuarter = e.getEpsEstimateNextQuarter();
 			Double epsEstimateNextYear = e.getEpsEstimateNextYear();
-			double epsPercentCurrentYear = safeDivide(epsEstimateCurrentYear,
-					ask);
-			double epsPercentNextQuarter = safeDivide(epsEstimateNextQuarter,
-					ask);
+			double epsPercentCurrentYear = safeDivide(epsEstimateCurrentYear, ask);
+			double epsPercentNextQuarter = safeDivide(epsEstimateNextQuarter, ask);
 			double epsPercentNextYear = safeDivide(epsEstimateNextYear, ask);
 			Double bookValuePerShare = e.getBookValuePerShare();
 			double bookValueMultiple = safeDivide(ask, bookValuePerShare);
 
-			isEstimateEpsAttractive = checkEps(comments,
-					isEstimateEpsAttractive, epsPercentCurrentYear,
+			isEstimateEpsAttractive = checkEps(comments, isEstimateEpsAttractive, epsPercentCurrentYear,
 					epsPercentNextQuarter, epsPercentNextYear);
-			isBookToValueAttractive = checkPe(comments,
-					isBookToValueAttractive, pe, per, bookValuePerShare,
+			isBookToValueAttractive = checkPe(comments, isBookToValueAttractive, pe, per, bookValuePerShare,
 					bookValueMultiple);
 			isPegAttractive = checkPeg(comments, isPegAttractive, peg);
 
-			isAttractiveRatios = isPeAttractive && isPegAttractive
-					&& isEstimateEpsAttractive && isBookToValueAttractive;
+			isAttractiveRatios = isPeAttractive && isPegAttractive && isEstimateEpsAttractive
+					&& isBookToValueAttractive;
 		} else {
-			String msg = "Currency is not interesting: " + stock.getCurrency()
-					+ ", " + stock.getName() + ", " + stock.getDescription();
-			comments.add(new FinancialComment(msg,
-					FinancialComment.CommentType.Currency));
+			String msg = "Currency is not interesting: " + stock.getCurrency() + ", " + stock.getName() + ", "
+					+ stock.getDescription();
+			comments.add(new FinancialComment(msg, FinancialComment.CommentType.Currency));
 		}
 
 		ret = advancedAnalysis(stock, e, comments, isAttractiveRatios);
 		return ret;
 	}
 
-	private FinancialAnalysis advancedAnalysis(Stock stock, Economic e,
-			List<FinancialComment> comments, boolean isAttractiveRatios) {
+	private FinancialAnalysis advancedAnalysis(Stock stock, Economic e, List<FinancialComment> comments,
+			boolean isAttractiveRatios) {
 		FinancialAnalysis ret;
 
 		if (isAttractiveRatios) {
-			log.debug("getting balance sheet for "+stock.getSymbol());
+			log.debug("getting balance sheet for " + stock.getSymbol());
 			String exchange = stock.getStockExchange();
-//			SortedMap<Date, BalanceSheet> annualBalanceSheetForSymbol = balanceSheetDao
-//					.getBalanceSheetForSymbol(stock.getSymbol(), exchange, true);
-//			SortedMap<Date, BalanceSheet> quarterlyBalanceSheetForSymbol = balanceSheetDao
-//					.getBalanceSheetForSymbol(stock.getSymbol(), exchange, false);
+			
+			// the commented out code below is the old yahoo financial statements format
+			// SortedMap<Date, BalanceSheet> annualBalanceSheetForSymbol =
+			// balanceSheetDao
+			// .getBalanceSheetForSymbol(stock.getSymbol(), exchange, true);
+			// SortedMap<Date, BalanceSheet> quarterlyBalanceSheetForSymbol =
+			// balanceSheetDao
+			// .getBalanceSheetForSymbol(stock.getSymbol(), exchange, false);
 
 			String symbol = stock.getSymbol();
-			FinancialData financialData = financialDataDao.getFinancialDataForSymbol(symbol, exchange);
-			if(financialData != null) {
-			SortedMap<Date, BalanceSheet> annualBalanceSheet = financialData.getAnnualBalanceSheet();
-			SortedMap<Date, BalanceSheet> quarterlyBalanceSheet = financialData.getQuarterlyBalanceSheet();
-			SortedMap<Date, Double> currentRatiosQutr = new TreeMap<Date, Double>();
-			SortedMap<Date, Double> quickRatiosQutr = new TreeMap<Date, Double>();
-			SortedMap<Date, Double> assetToDebtRatiosQutr = new TreeMap<Date, Double>();
+			FinancialData financialData = getFinancialStatements(exchange, symbol);
+			if (financialData != null) {
+				SortedMap<Date, BalanceSheet> annualBalanceSheet = financialData.getAnnualBalanceSheet();
+				SortedMap<Date, BalanceSheet> quarterlyBalanceSheet = financialData.getQuarterlyBalanceSheet();
+				SortedMap<Date, Double> currentRatiosQutr = new TreeMap<Date, Double>();
+				SortedMap<Date, Double> quickRatiosQutr = new TreeMap<Date, Double>();
+				SortedMap<Date, Double> assetToDebtRatiosQutr = new TreeMap<Date, Double>();
 
-			calculateRatiosFromBalanceSheets(quarterlyBalanceSheet,
-					currentRatiosQutr, quickRatiosQutr, assetToDebtRatiosQutr);
+				calculateRatiosFromBalanceSheets(quarterlyBalanceSheet, currentRatiosQutr, quickRatiosQutr,
+						assetToDebtRatiosQutr);
 
-			SortedMap<Date, Double> currentRatiosAnnual = new TreeMap<Date, Double>();
-			SortedMap<Date, Double> quickRatiosAnnual = new TreeMap<Date, Double>();
-			SortedMap<Date, Double> assetToDebtRatiosAnnual = new TreeMap<Date, Double>();
-			calculateRatiosFromBalanceSheets(annualBalanceSheet,
-					currentRatiosAnnual, quickRatiosAnnual,
-					assetToDebtRatiosAnnual);
-			Acceptance acceptanceResult = analyseRatios(currentRatiosQutr,
-					quickRatiosQutr, assetToDebtRatiosQutr,
-					currentRatiosAnnual, quickRatiosAnnual,
-					assetToDebtRatiosAnnual, stock);
-			ret = new FinancialAnalysis(stock, e, comments, acceptanceResult,
-					currentRatiosQutr, quickRatiosQutr, assetToDebtRatiosQutr,
-					currentRatiosAnnual, quickRatiosAnnual,
-					assetToDebtRatiosAnnual);
-			}else {
+				SortedMap<Date, Double> currentRatiosAnnual = new TreeMap<Date, Double>();
+				SortedMap<Date, Double> quickRatiosAnnual = new TreeMap<Date, Double>();
+				SortedMap<Date, Double> assetToDebtRatiosAnnual = new TreeMap<Date, Double>();
+				calculateRatiosFromBalanceSheets(annualBalanceSheet, currentRatiosAnnual, quickRatiosAnnual,
+						assetToDebtRatiosAnnual);
+				Acceptance acceptanceResult = analyseRatios(currentRatiosQutr, quickRatiosQutr, assetToDebtRatiosQutr,
+						currentRatiosAnnual, quickRatiosAnnual, assetToDebtRatiosAnnual, stock);
+				ret = new FinancialAnalysis(stock, e, comments, acceptanceResult, currentRatiosQutr, quickRatiosQutr,
+						assetToDebtRatiosQutr, currentRatiosAnnual, quickRatiosAnnual, assetToDebtRatiosAnnual);
+			} else {
 				comments.add(new FinancialComment("No financial data available", CommentType.MissingData));
-				ret = new FinancialAnalysis(stock, e, comments, Acceptance.HOLD,
-						null, null, null, null, null, null);
+				ret = new FinancialAnalysis(stock, e, comments, Acceptance.HOLD, null, null, null, null, null, null);
 			}
 		} else {
-			ret = new FinancialAnalysis(stock, e, comments, Acceptance.HOLD,
-					null, null, null, null, null, null);
+			ret = new FinancialAnalysis(stock, e, comments, Acceptance.HOLD, null, null, null, null, null, null);
 		}
 
 		return ret;
 	}
 
-	private class Results{
+	private FinancialData getFinancialStatements(String exchange, String symbol) {
+		FinancialData financialData = financialStatementsProvider.getFinancialStatements(symbol);
+		return financialData;
+	}
+
+	private class Results {
 		final boolean good;
 		final boolean excellent;
 		final boolean onlyLast;
+
 		public Results(boolean good, boolean excellent, boolean onlyLast) {
 			super();
 			this.good = good;
@@ -201,7 +197,7 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 			this.onlyLast = onlyLast;
 		}
 	}
-	
+
 	private Results computeResult(SortedMap<Date, Double> dataPoints, double min) {
 		boolean all = true;
 		double average = 0;
@@ -217,43 +213,37 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 			last = r;
 		}
 		average /= count;
-		boolean good= average> min && last  > min;
-		boolean onlyLast = last>min;
-		Results	res = new Results(good,all,onlyLast);
+		boolean good = average > min && last > min;
+		boolean onlyLast = last > min;
+		Results res = new Results(good, all, onlyLast);
 		return res;
 	}
 
-	private Acceptance analyseRatios(SortedMap<Date, Double> currentRatiosQutr,
-			SortedMap<Date, Double> quickRatiosQutr,
-			SortedMap<Date, Double> assetToDebtRatiosQutrData,
-			SortedMap<Date, Double> currentRatiosAnnual,
-			SortedMap<Date, Double> quickRatiosAnnual,
-			SortedMap<Date, Double> assetToDebtRatiosAnnualData, Stock stock) {
-	
+	private Acceptance analyseRatios(SortedMap<Date, Double> currentRatiosQutr, SortedMap<Date, Double> quickRatiosQutr,
+			SortedMap<Date, Double> assetToDebtRatiosQutrData, SortedMap<Date, Double> currentRatiosAnnual,
+			SortedMap<Date, Double> quickRatiosAnnual, SortedMap<Date, Double> assetToDebtRatiosAnnualData,
+			Stock stock) {
+
 		// targetMinCurrentRatio = 2.0;
-		Results currentRatiosQutrRes = computeResult(currentRatiosQutr,targetMinCurrentRatio);	
-		Results currentRatiosAnnualRes = computeResult(currentRatiosAnnual,targetMinCurrentRatio);
+		Results currentRatiosQutrRes = computeResult(currentRatiosQutr, targetMinCurrentRatio);
+		Results currentRatiosAnnualRes = computeResult(currentRatiosAnnual, targetMinCurrentRatio);
 		// quickCash > 1.0 is good
-		Results quickRatiosQutrRes = computeResult(quickRatiosQutr,targetMinQuickRatio);
-		Results quickRatiosAnnualRes = computeResult(quickRatiosAnnual,targetMinQuickRatio);
+		Results quickRatiosQutrRes = computeResult(quickRatiosQutr, targetMinQuickRatio);
+		Results quickRatiosAnnualRes = computeResult(quickRatiosAnnual, targetMinQuickRatio);
 		// assetToDebt > 2.9 is good
 		Results assetToDebtRatiosQutr = computeResult(assetToDebtRatiosQutrData, targetMinAssetToDebtRatio);
 		Results assetToDebtRatiosAnnual = computeResult(assetToDebtRatiosAnnualData, targetMinAssetToDebtRatio);
-		
+
 		Acceptance ret;
-		if (currentRatiosAnnualRes.excellent && currentRatiosQutrRes.excellent
-				&& quickRatiosAnnualRes.excellent && quickRatiosQutrRes.excellent
-				&& assetToDebtRatiosQutr.excellent
+		if (currentRatiosAnnualRes.excellent && currentRatiosQutrRes.excellent && quickRatiosAnnualRes.excellent
+				&& quickRatiosQutrRes.excellent && assetToDebtRatiosQutr.excellent
 				&& assetToDebtRatiosAnnual.excellent) {
 			ret = Acceptance.STRONG_BUY;
-		} else if (currentRatiosQutrRes.good && quickRatiosAnnualRes.good
-				&& quickRatiosQutrRes.good && currentRatiosAnnualRes.good
-				&& assetToDebtRatiosQutr.good && assetToDebtRatiosAnnual.good) {
+		} else if (currentRatiosQutrRes.good && quickRatiosAnnualRes.good && quickRatiosQutrRes.good
+				&& currentRatiosAnnualRes.good && assetToDebtRatiosQutr.good && assetToDebtRatiosAnnual.good) {
 			ret = Acceptance.BUY;
-		} else if(                                  
-			currentRatiosQutrRes.good  && quickRatiosAnnualRes.onlyLast  &&    
-			quickRatiosQutrRes.good    && currentRatiosAnnualRes.onlyLast  &&    
-			assetToDebtRatiosQutr.good && assetToDebtRatiosAnnual.onlyLast	){
+		} else if (currentRatiosQutrRes.good && quickRatiosAnnualRes.onlyLast && quickRatiosQutrRes.good
+				&& currentRatiosAnnualRes.onlyLast && assetToDebtRatiosQutr.good && assetToDebtRatiosAnnual.onlyLast) {
 			ret = Acceptance.BUY;
 		} else {
 			ret = Acceptance.HOLD;
@@ -261,24 +251,18 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 		return ret;
 	}
 
-	
-	private void calculateRatiosFromBalanceSheets(
-			SortedMap<Date, BalanceSheet> quarterlyBalanceSheetForSymbol,
-			SortedMap<Date, Double> currentRatios,
-			SortedMap<Date, Double> quickRatios,
+	private void calculateRatiosFromBalanceSheets(SortedMap<Date, BalanceSheet> quarterlyBalanceSheetForSymbol,
+			SortedMap<Date, Double> currentRatios, SortedMap<Date, Double> quickRatios,
 			SortedMap<Date, Double> assetToDebtRatios) {
 		for (Date d : quarterlyBalanceSheetForSymbol.keySet()) {
 			BalanceSheet balanceSheet = quarterlyBalanceSheetForSymbol.get(d);
-			double totalCurrentAssets = balanceSheet
-					.getTotalCurrentAssetsCalculated();
-			double totalCurrentLiabilities = balanceSheet
-					.getTotalCurrentLiabilitiesCalculated();
+			double totalCurrentAssets = balanceSheet.getTotalCurrentAssetsCalculated();
+			double totalCurrentLiabilities = balanceSheet.getTotalCurrentLiabilitiesCalculated();
 
 			if (totalCurrentAssets != 0 && totalCurrentLiabilities != 0) {
 				// double debtToAssets = totalCurrentLiabilities /
 				// totalCurrentAssets;
-				double currentRatio = totalCurrentAssets
-						/ totalCurrentLiabilities;
+				double currentRatio = totalCurrentAssets / totalCurrentLiabilities;
 				currentRatios.put(d, currentRatio);// currentRatio > 2.0 is good
 			}
 			double cashAndEquivalent = balanceSheet.getCashAndEquivalent();
@@ -289,85 +273,64 @@ public class FinanceFundamentalAnalysisControllerImpl implements
 			double quickRatio = quickCash / totalCurrentLiabilities;
 			quickRatios.put(d, quickCash);
 
-			double assetToDebtRatio = safeDivide(balanceSheet.getTotalAssets(),
-					balanceSheet.getTotalLiabilities());
+			double assetToDebtRatio = safeDivide(balanceSheet.getTotalAssets(), balanceSheet.getTotalLiabilities());
 			quickRatios.put(d, quickRatio);
 			assetToDebtRatios.put(d, assetToDebtRatio);
 		}
 	}
 
-	private boolean peCheck(List<FinancialComment> comments, Double pe,
-			Double per) {
+	private boolean peCheck(List<FinancialComment> comments, Double pe, Double per) {
 		boolean isPeAttractive = false;
 		if (pe != null && pe > 0 && pe < 15) {
 			String msg = "pe=" + pe + ", pe calculated by yahoo";
-			comments.add(new FinancialComment(msg,
-					FinancialComment.CommentType.PastEarnings));
+			comments.add(new FinancialComment(msg, FinancialComment.CommentType.PastEarnings));
 			isPeAttractive = true;
 		} else if (per != null && per > 0 && per < 15) {
-			String msg = "per=" + per
-					+ ", per calculated from eps and ask price";
-			comments.add(new FinancialComment(msg,
-					FinancialComment.CommentType.PastEarnings));
+			String msg = "per=" + per + ", per calculated from eps and ask price";
+			comments.add(new FinancialComment(msg, FinancialComment.CommentType.PastEarnings));
 			isPeAttractive = true;
 		}
 		return isPeAttractive;
 	}
 
-	private boolean checkPeg(List<FinancialComment> comments,
-			boolean isPegAttractive, Double peg) {
+	private boolean checkPeg(List<FinancialComment> comments, boolean isPegAttractive, Double peg) {
 		if (peg != null && peg < 1) {
 			String msg = "Peg = " + peg;
-			comments.add(new FinancialComment(msg,
-					FinancialComment.CommentType.Peg));
+			comments.add(new FinancialComment(msg, FinancialComment.CommentType.Peg));
 			isPegAttractive = true;
 		}
 		return isPegAttractive;
 	}
 
-	private boolean checkPe(List<FinancialComment> comments,
-			boolean isBookToValueAttractive, Double pe, Double per,
+	private boolean checkPe(List<FinancialComment> comments, boolean isBookToValueAttractive, Double pe, Double per,
 			Double bookValuePerShare, double bookValueMultiple) {
 		if (pe > 0 && bookValueMultiple > 0 && bookValueMultiple * pe < 25) {
-			String msg = "book value/share= " + bookValuePerShare
-					+ ", gives a multiple of = " + bookValueMultiple
+			String msg = "book value/share= " + bookValuePerShare + ", gives a multiple of = " + bookValueMultiple
 					+ ", pe*bv=" + bookValueMultiple * pe;
-			comments.add(new FinancialComment(msg,
-					FinancialComment.CommentType.BookValue));
+			comments.add(new FinancialComment(msg, FinancialComment.CommentType.BookValue));
 			isBookToValueAttractive = true;
-		} else if (per > 0 && bookValueMultiple > 0
-				&& bookValueMultiple * pe < 27) {
-			String msg = "book value/share= " + bookValuePerShare
-					+ ", gives a multiple of = " + bookValueMultiple
+		} else if (per > 0 && bookValueMultiple > 0 && bookValueMultiple * pe < 27) {
+			String msg = "book value/share= " + bookValuePerShare + ", gives a multiple of = " + bookValueMultiple
 					+ ", per*bv=" + bookValueMultiple * pe;
-			comments.add(new FinancialComment(msg,
-					FinancialComment.CommentType.BookValue));
+			comments.add(new FinancialComment(msg, FinancialComment.CommentType.BookValue));
 			isBookToValueAttractive = true;
 		}
 		return isBookToValueAttractive;
 	}
 
-	private boolean checkEps(List<FinancialComment> comments,
-			boolean isEstimateEpsAttractive, double epsPercentCurrentYear,
-			double epsPercentNextQuarter, double epsPercentNextYear) {
+	private boolean checkEps(List<FinancialComment> comments, boolean isEstimateEpsAttractive,
+			double epsPercentCurrentYear, double epsPercentNextQuarter, double epsPercentNextYear) {
 
-		if (epsPercentCurrentYear > 0.05 && epsPercentNextQuarter > 0.024
-				&& epsPercentNextYear > 0.01) {
-			String msg = "earnings to price, current year="
-					+ epsPercentCurrentYear
+		if (epsPercentCurrentYear > 0.05 && epsPercentNextQuarter > 0.024 && epsPercentNextYear > 0.01) {
+			String msg = "earnings to price, current year=" + epsPercentCurrentYear
 					+ ", per calculated from epsEstimateCurrentYear and ask price";
-			comments.add(new FinancialComment(msg,
-					FinancialComment.CommentType.FutureEarnings));
-			String msg1 = "earnings to price, next quarter="
-					+ epsPercentNextQuarter
+			comments.add(new FinancialComment(msg, FinancialComment.CommentType.FutureEarnings));
+			String msg1 = "earnings to price, next quarter=" + epsPercentNextQuarter
 					+ ", per calculated from epsEstimateNextQuarter and ask price";
-			comments.add(new FinancialComment(msg1,
-					FinancialComment.CommentType.FutureEarnings));
-			String msg2 = "earnings to price, next year="
-					+ epsPercentNextQuarter
+			comments.add(new FinancialComment(msg1, FinancialComment.CommentType.FutureEarnings));
+			String msg2 = "earnings to price, next year=" + epsPercentNextQuarter
 					+ ", per calculated from epsEstimateNextQuarter and ask price";
-			comments.add(new FinancialComment(msg2,
-					FinancialComment.CommentType.FutureEarnings));
+			comments.add(new FinancialComment(msg2, FinancialComment.CommentType.FutureEarnings));
 			isEstimateEpsAttractive = true;
 		}
 		return isEstimateEpsAttractive;

@@ -278,6 +278,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 	    populateExistingResultsInDb();
 		 */
 		Collection<Control> symbolAndSectorRefresh = controlRepository.findByType(ControlType.SYMBOL_SECTOR_REFRESH);
+		
 		boolean symbolsReloadNeeded = true;
 		if (symbolAndSectorRefresh != null && !symbolAndSectorRefresh.isEmpty()) {
 			TreeMap<java.sql.Date, List<Control>> refreshes = new TreeMap<>(
@@ -365,7 +366,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 			companyRepository.save(companiesToSave);
 			log.info("done refreshing sectors, industries and companies " + companiesToSave.size());
 
-			c.setComments("Still testing");
+			c.setComments("Successful");
 			c.setStatus(Status.SUCCESS);
 			c.setTimeStamp(java.sql.Date.valueOf(LocalDate.now()));
 			c.setType(ControlType.SYMBOL_SECTOR_REFRESH);

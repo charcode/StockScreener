@@ -6,17 +6,17 @@ public class BalanceSheet {
 	class Assets {
 		class CurrentAssets {
 			// current assets
-			private final double cashAndEquivalent;
-			private final double shortTermInvestements;
-			private final double netReceivables;
-			private final double inventory;
-			private final double otherCurrentAssets;
-			private final double totalCurrentAssetsCalculated;
-			private final double totalCurrentAssets;
+			private final Double cashAndEquivalent;
+			private final Double shortTermInvestements;
+			private final Double netReceivables;
+			private final Double inventory;
+			private final Double otherCurrentAssets;
+			private final Double totalCurrentAssetsCalculated;
+			private final Double totalCurrentAssets;
 
 			public CurrentAssets(double cashAndEquivalent,
-					double shortTermInvestements, double netReceivables,
-					double inventory, double otherCurrentAssets,
+					double shortTermInvestements, Double netReceivables,
+					double inventory, Double otherCurrentAssets,
 					double totalCurrentAssets) {
 				super();
 				this.cashAndEquivalent = cashAndEquivalent;
@@ -30,31 +30,31 @@ public class BalanceSheet {
 						+ getShortTermInvestements() + getCashAndEquivalent();
 			}
 
-			private double getTotalCurrentAssets() {
+			private Double getTotalCurrentAssets() {
 				return totalCurrentAssets;
 			}
 
-			private double getCashAndEquivalent() {
+			private Double getCashAndEquivalent() {
 				return cashAndEquivalent;
 			}
 
-			private double getShortTermInvestements() {
+			private Double getShortTermInvestements() {
 				return shortTermInvestements;
 			}
 
-			private double getNetReceivables() {
+			private Double getNetReceivables() {
 				return netReceivables;
 			}
 
-			private double getInventory() {
+			private Double getInventory() {
 				return inventory;
 			}
 
-			private double getOtherCurrentAssets() {
+			private Double getOtherCurrentAssets() {
 				return otherCurrentAssets;
 			}
 
-			private double getTotalCurrentAssetsCalculated() {
+			private Double getTotalCurrentAssetsCalculated() {
 				return totalCurrentAssetsCalculated;
 			}
 
@@ -118,18 +118,18 @@ public class BalanceSheet {
 		}
 
 		class IlliquidAssets {
-			private final double longTermInvestments;
-			private final double propertyPlantAndEquivalent;
-			private final double goodwill;
-			private final double intangibleAssets;
-			private final double accumulatedAmortization;
-			private final double otherAssets;
-			private final double deferredLongTermAssetCharges;
+			private final Double longTermInvestments;
+			private final Double propertyPlantAndEquivalent;
+			private final Double goodwill;
+			private final Double intangibleAssets;
+			private final Double accumulatedAmortization;
+			private final Double otherAssets;
+			private final Double deferredLongTermAssetCharges;
 
 			private IlliquidAssets(double longTermInvestments,
-					double propertyPlantAndEquivalent, double goodwill,
-					double intangibleAssets, double accumulatedAmortization,
-					double otherAssets, double deferredLongTermAssetCharges) {
+					double propertyPlantAndEquivalent, Double goodwill,
+					double intangibleAssets, Double accumulatedAmortization,
+					double otherAssets, Double deferredLongTermAssetCharges) {
 				super();
 				this.longTermInvestments = longTermInvestments;
 				this.propertyPlantAndEquivalent = propertyPlantAndEquivalent;
@@ -140,31 +140,31 @@ public class BalanceSheet {
 				this.deferredLongTermAssetCharges = deferredLongTermAssetCharges;
 			}
 
-			private double getLongTermInvestments() {
+			private Double getLongTermInvestments() {
 				return longTermInvestments;
 			}
 
-			private double getPropertyPlantAndEquivalent() {
+			private Double getPropertyPlantAndEquivalent() {
 				return propertyPlantAndEquivalent;
 			}
 
-			private double getGoodwill() {
+			private Double getGoodwill() {
 				return goodwill;
 			}
 
-			private double getIntangibleAssets() {
+			private Double getIntangibleAssets() {
 				return intangibleAssets;
 			}
 
-			private double getAccumulatedAmortization() {
+			private Double getAccumulatedAmortization() {
 				return accumulatedAmortization;
 			}
 
-			private double getOtherAssets() {
+			private Double getOtherAssets() {
 				return otherAssets;
 			}
 
-			private double getDeferredLongTermAssetCharges() {
+			private Double getDeferredLongTermAssetCharges() {
 				return deferredLongTermAssetCharges;
 			}
 
@@ -235,15 +235,15 @@ public class BalanceSheet {
 		// illiquide assets
 		private final CurrentAssets currentAssets;
 		private final IlliquidAssets illiquidAssets;
-		private final double totalAssets;
+		private final Double totalAssets;
 
-		private Assets(double cashAndEquivalent, double shortTermInvestements,
-				double netReceivables, double inventory,
-				double otherCurrentAssets, double totalCurrentAssets,
-				double longTermInvestments, double propertyPlantAndEquivalent,
-				double goodwill, double intangibleAssets,
-				double accumulatedAmortization, double otherAssets,
-				double deferredLongTermAssetCharges, double totalAssets) {
+		private Assets(double cashAndEquivalent, Double shortTermInvestements,
+				double netReceivables, Double inventory,
+				double otherCurrentAssets, Double totalCurrentAssets,
+				double longTermInvestments, Double propertyPlantAndEquivalent,
+				double goodwill, Double intangibleAssets,
+				double accumulatedAmortization, Double otherAssets,
+				double deferredLongTermAssetCharges, Double totalAssets) {
 			super();
 			this.currentAssets = new CurrentAssets(cashAndEquivalent,
 					shortTermInvestements, netReceivables, inventory,
@@ -255,63 +255,63 @@ public class BalanceSheet {
 			this.totalAssets = totalAssets;
 		}
 
-		private double getTotalAssets() {
+		private Double getTotalAssets() {
 			return totalAssets;
 		}
 
-		private double getCashAndEquivalent() {
+		private Double getCashAndEquivalent() {
 			return currentAssets.getCashAndEquivalent();
 		}
 
-		private double getShortTermInvestements() {
+		private Double getShortTermInvestments() {
 			return currentAssets.getShortTermInvestements();
 		}
 
-		private double getNetReceivables() {
+		private Double getNetReceivables() {
 			return currentAssets.getNetReceivables();
 		}
 
-		private double getInventory() {
+		private Double getInventory() {
 			return currentAssets.getInventory();
 		}
 
-		private double getOtherCurrentAssets() {
+		private Double getOtherCurrentAssets() {
 			return currentAssets.getOtherCurrentAssets();
 		}
 
-		private double getTotalCurrentAssetsCalculated() {
+		private Double getTotalCurrentAssetsCalculated() {
 			return currentAssets.getTotalCurrentAssetsCalculated();
 		}
 
-		private double getTotalCurrentAssets() {
+		private Double getTotalCurrentAssets() {
 			return currentAssets.getTotalCurrentAssets();
 		}
 
-		private double getLongTermInvestments() {
+		private Double getLongTermInvestments() {
 			return illiquidAssets.getLongTermInvestments();
 		}
 
-		private double getPropertyPlantAndEquivalent() {
+		private Double getPropertyPlantAndEquivalent() {
 			return illiquidAssets.getPropertyPlantAndEquivalent();
 		}
 
-		private double getGoodwill() {
+		private Double getGoodwill() {
 			return illiquidAssets.getGoodwill();
 		}
 
-		private double getIntangibleAssets() {
+		private Double getIntangibleAssets() {
 			return illiquidAssets.getIntangibleAssets();
 		}
 
-		private double getAccumulatedAmortization() {
+		private Double getAccumulatedAmortization() {
 			return illiquidAssets.getAccumulatedAmortization();
 		}
 
-		private double getOtherAssets() {
+		private Double getOtherAssets() {
 			return illiquidAssets.getOtherAssets();
 		}
 
-		private double getDeferredLongTermAssetCharges() {
+		private Double getDeferredLongTermAssetCharges() {
 			return illiquidAssets.getDeferredLongTermAssetCharges();
 		}
 
@@ -360,11 +360,11 @@ public class BalanceSheet {
 
 	class Liabilities {
 		class CurrentLiabilities {
-			private final double accountPayable;
-			private final double shortCurrentLongTermDebt;
-			private final double otherCurrentLiabilities;
-			private final double totalCurrentLiabilities;
-			private final double totalCurrentLiabilitiesCalculated;
+			private final Double accountPayable;
+			private final Double shortCurrentLongTermDebt;
+			private final Double otherCurrentLiabilities;
+			private final Double totalCurrentLiabilities;
+			private final Double totalCurrentLiabilitiesCalculated;
 
 			private CurrentLiabilities(double accountPayable,
 					double shortCurrentLongTermDebt,
@@ -380,23 +380,23 @@ public class BalanceSheet {
 						+ getOtherCurrentLiabilities();
 			}
 
-			private double getAccountPayable() {
+			private Double getAccountPayable() {
 				return accountPayable;
 			}
 
-			private double getShortCurrentLongTermDebt() {
+			private Double getShortCurrentLongTermDebt() {
 				return shortCurrentLongTermDebt;
 			}
 
-			private double getTotalCurrentLiabilities() {
+			private Double getTotalCurrentLiabilities() {
 				return totalCurrentLiabilities;
 			}
 
-			private double getOtherCurrentLiabilities() {
+			private Double getOtherCurrentLiabilities() {
 				return otherCurrentLiabilities;
 			}
 
-			private double getTotalCurrentLiabilitiesCalculated() {
+			private Double getTotalCurrentLiabilitiesCalculated() {
 				return totalCurrentLiabilitiesCalculated;
 			}
 
@@ -451,16 +451,16 @@ public class BalanceSheet {
 		}
 
 		class LongTermLiabilities {
-			final double longTermDebt;
-			final double otherLiabilities;
-			final double deferredLongTermLiabilityCharges;
-			final double minorityInterest;
-			final double negativeGoodwill;
+			final Double longTermDebt;
+			final Double otherLiabilities;
+			final Double deferredLongTermLiabilityCharges;
+			final Double minorityInterest;
+			final Double negativeGoodwill;
 
 			private LongTermLiabilities(double longTermDebt,
 					double otherLiabilities,
 					double deferredLongTermLiabilityCharges,
-					double minorityInterest, double negativeGoodwill) {
+					double minorityInterest, Double negativeGoodwill) {
 				super();
 				this.longTermDebt = longTermDebt;
 				this.otherLiabilities = otherLiabilities;
@@ -469,23 +469,23 @@ public class BalanceSheet {
 				this.negativeGoodwill = negativeGoodwill;
 			}
 
-			private double getLongTermDebt() {
+			private Double getLongTermDebt() {
 				return longTermDebt;
 			}
 
-			private double getOtherLiabilities() {
+			private Double getOtherLiabilities() {
 				return otherLiabilities;
 			}
 
-			private double getDeferredLongTermLiabilityCharges() {
+			private Double getDeferredLongTermLiabilityCharges() {
 				return deferredLongTermLiabilityCharges;
 			}
 
-			private double getMinorityInterest() {
+			private Double getMinorityInterest() {
 				return minorityInterest;
 			}
 
-			private double getNegativeGoodwill() {
+			private Double getNegativeGoodwill() {
 				return negativeGoodwill;
 			}
 
@@ -545,14 +545,14 @@ public class BalanceSheet {
 
 		private final LongTermLiabilities longTermLiabilities;
 		private final CurrentLiabilities currentLiabilities;
-		private final double totalLiabilities;
+		private final Double totalLiabilities;
 
 		private Liabilities(double accountPayable,
 				double shortCurrentLongTermDebt,
-				double otherCurrentLiabilities, double totalCurrentLiabilities,
-				double longTermDebt, double otherLiabilities,
+				double otherCurrentLiabilities, Double totalCurrentLiabilities,
+				double longTermDebt, Double otherLiabilities,
 				double deferredLongTermLiabilityCharges,
-				double minorityInterest, double negativeGoodwill,
+				double minorityInterest, Double negativeGoodwill,
 				double totalLiabilities) {
 			this.currentLiabilities = new CurrentLiabilities(accountPayable,
 					shortCurrentLongTermDebt, otherCurrentLiabilities,
@@ -563,47 +563,47 @@ public class BalanceSheet {
 			this.totalLiabilities = totalLiabilities;
 		}
 
-		private double getLongTermDebt() {
+		private Double getLongTermDebt() {
 			return longTermLiabilities.getLongTermDebt();
 		}
 
-		private double getTotalCurrentLiabilities() {
+		private Double getTotalCurrentLiabilities() {
 			return currentLiabilities.getTotalCurrentLiabilities();
 		}
 
-		private double getTotalLiabilities() {
+		private Double getTotalLiabilities() {
 			return totalLiabilities;
 		}
 
-		private double getOtherLiabilities() {
+		private Double getOtherLiabilities() {
 			return longTermLiabilities.getOtherLiabilities();
 		}
 
-		private double getDeferredLongTermLiabilityCharges() {
+		private Double getDeferredLongTermLiabilityCharges() {
 			return longTermLiabilities.getDeferredLongTermLiabilityCharges();
 		}
 
-		private double getMinorityInterest() {
+		private Double getMinorityInterest() {
 			return longTermLiabilities.getMinorityInterest();
 		}
 
-		private double getNegativeGoodwill() {
+		private Double getNegativeGoodwill() {
 			return longTermLiabilities.getNegativeGoodwill();
 		}
 
-		private double getAccountPayable() {
+		private Double getAccountPayable() {
 			return currentLiabilities.getAccountPayable();
 		}
 
-		private double getShortCurrentLongTermDebt() {
+		private Double getShortCurrentLongTermDebt() {
 			return currentLiabilities.getShortCurrentLongTermDebt();
 		}
 
-		private double getOtherCurrentLiabilities() {
+		private Double getOtherCurrentLiabilities() {
 			return currentLiabilities.getOtherCurrentLiabilities();
 		}
 
-		private double getTotalCurrentLiabilitiesCalculated() {
+		private Double getTotalCurrentLiabilitiesCalculated() {
 			return currentLiabilities.getTotalCurrentLiabilitiesCalculated();
 		}
 
@@ -664,9 +664,9 @@ public class BalanceSheet {
 		double otherstockholdersEquity;
 
 		private StockholdersEquity(double miscStocksOptionsWarrants,
-				double redeemablePreferredStocks, double commonStock,
-				double preferredStock, double retainedEarnings,
-				double treasuryStock, double capitalSurplus,
+				double redeemablePreferredStocks, Double commonStock,
+				double preferredStock, Double retainedEarnings,
+				double treasuryStock, Double capitalSurplus,
 				double otherstockholdersEquity) {
 			super();
 			this.miscStocksOptionsWarrants = miscStocksOptionsWarrants;
@@ -679,35 +679,35 @@ public class BalanceSheet {
 			this.otherstockholdersEquity = otherstockholdersEquity;
 		}
 
-		private double getMiscStocksOptionsWarrants() {
+		private Double getMiscStocksOptionsWarrants() {
 			return miscStocksOptionsWarrants;
 		}
 
-		private double getRedeemablePreferredStocks() {
+		private Double getRedeemablePreferredStocks() {
 			return redeemablePreferredStocks;
 		}
 
-		private double getCommonStock() {
+		private Double getCommonStock() {
 			return commonStock;
 		}
 
-		private double getPreferredStock() {
+		private Double getPreferredStock() {
 			return preferredStock;
 		}
 
-		private double getRetainedEarnings() {
+		private Double getRetainedEarnings() {
 			return retainedEarnings;
 		}
 
-		private double getTreasuryStock() {
+		private Double getTreasuryStock() {
 			return treasuryStock;
 		}
 
-		private double getCapitalSurplus() {
+		private Double getCapitalSurplus() {
 			return capitalSurplus;
 		}
 
-		private double getOtherstockholdersEquity() {
+		private Double getOtherstockholdersEquity() {
 			return otherstockholdersEquity;
 		}
 
@@ -784,22 +784,22 @@ public class BalanceSheet {
 	private final Liabilities liabilities;
 	private final StockholdersEquity stockholdersEquity;
 
-	public BalanceSheet(String symbol, double cashAndEquivalent,
-			double shortTermInvestements, double netReceivables,
-			double inventory, double otherCurrentAssets,
-			double totalCurrentAssets, double longTermInvestments,
-			double propertyPlantAndEquivalent, double goodwill,
-			double intangibleAssets, double accumulatedAmortization,
-			double otherAssets, double totalAssets,
-			double deferredLongTermAssetCharges, double accountPayable,
-			double shortCurrentLongTermDebt, double otherCurrentLiabilities,
-			double totalCurrentLiabilities, double longTermDebt,
-			double otherLiabilities, double totalLiabilities,
-			double deferredLongTermLiabilityCharges, double minorityInterest,
-			double negativeGoodwill, double miscStocksOptionsWarrants,
-			double redeemablePreferredStocks, double commonStock,
-			double preferredStock, double retainedEarnings,
-			double treasuryStock, double capitalSurplus,
+	public BalanceSheet(String symbol, Double cashAndEquivalent,
+			double shortTermInvestements, Double netReceivables,
+			double inventory, Double otherCurrentAssets,
+			double totalCurrentAssets, Double longTermInvestments,
+			double propertyPlantAndEquivalent, Double goodwill,
+			double intangibleAssets, Double accumulatedAmortization,
+			double otherAssets, Double totalAssets,
+			double deferredLongTermAssetCharges, Double accountPayable,
+			double shortCurrentLongTermDebt, Double otherCurrentLiabilities,
+			double totalCurrentLiabilities, Double longTermDebt,
+			double otherLiabilities, Double totalLiabilities,
+			double deferredLongTermLiabilityCharges, Double minorityInterest,
+			double negativeGoodwill, Double miscStocksOptionsWarrants,
+			double redeemablePreferredStocks, Double commonStock,
+			double preferredStock, Double retainedEarnings,
+			double treasuryStock, Double capitalSurplus,
 			double otherstockholdersEquity) {
 		this.symbol = symbol;
 		this.assets = new Assets(cashAndEquivalent, shortTermInvestements,
@@ -823,139 +823,139 @@ public class BalanceSheet {
 		return symbol;
 	}
 
-	public double getCashAndEquivalent() {
+	public Double getCashAndEquivalent() {
 		return assets.getCashAndEquivalent();
 	}
 
-	public double getShortTermInvestements() {
-		return assets.getShortTermInvestements();
+	public Double getShortTermInvestments() {
+		return assets.getShortTermInvestments();
 	}
 
-	public double getNetReceivables() {
+	public Double getNetReceivables() {
 		return assets.getNetReceivables();
 	}
 
-	public double getInventory() {
+	public Double getInventory() {
 		return assets.getInventory();
 	}
 
-	public double getOtherCurrentAssets() {
+	public Double getOtherCurrentAssets() {
 		return assets.getOtherCurrentAssets();
 	}
 
-	public double getLongTermInvestments() {
+	public Double getLongTermInvestments() {
 		return assets.getLongTermInvestments();
 	}
 
-	public double getPropertyPlantAndEquivalent() {
+	public Double getPropertyPlantAndEquivalent() {
 		return assets.getPropertyPlantAndEquivalent();
 	}
 
-	public double getGoodwill() {
+	public Double getGoodwill() {
 		return assets.getGoodwill();
 	}
 
-	public double getIntangibleAssets() {
+	public Double getIntangibleAssets() {
 		return assets.getIntangibleAssets();
 	}
 
-	public double getAccumulatedAmortization() {
+	public Double getAccumulatedAmortization() {
 		return assets.getAccumulatedAmortization();
 	}
 
-	public double getOtherAssets() {
+	public Double getOtherAssets() {
 		return assets.getOtherAssets();
 	}
 
-	public double getDeferredLongTermAssetCharges() {
+	public Double getDeferredLongTermAssetCharges() {
 		return assets.getDeferredLongTermAssetCharges();
 	}
 
-	public double getTotalCurrentAssetsCalculated() {
+	public Double getTotalCurrentAssetsCalculated() {
 		return assets.getTotalCurrentAssetsCalculated();
 	}
 
-	public double getTotalCurrentAssets() {
+	public Double getTotalCurrentAssets() {
 		return assets.getTotalCurrentAssets();
 	}
 
-	public double getTotalAssets() {
+	public Double getTotalAssets() {
 		return assets.getTotalAssets();
 	}
 
-	public double getLongTermDebt() {
+	public Double getLongTermDebt() {
 		return liabilities.getLongTermDebt();
 	}
 
-	public double getOtherLiabilities() {
+	public Double getOtherLiabilities() {
 		return liabilities.getOtherLiabilities();
 	}
 
-	public double getDeferredLongTermLiabilityCharges() {
+	public Double getDeferredLongTermLiabilityCharges() {
 		return liabilities.getDeferredLongTermLiabilityCharges();
 	}
 
-	public double getMinorityInterest() {
+	public Double getMinorityInterest() {
 		return liabilities.getMinorityInterest();
 	}
 
-	public double getNegativeGoodwill() {
+	public Double getNegativeGoodwill() {
 		return liabilities.getNegativeGoodwill();
 	}
 
-	public double getAccountPayable() {
+	public Double getAccountPayable() {
 		return liabilities.getAccountPayable();
 	}
 
-	public double getShortCurrentLongTermDebt() {
+	public Double getShortCurrentLongTermDebt() {
 		return liabilities.getShortCurrentLongTermDebt();
 	}
 
-	public double getOtherCurrentLiabilities() {
+	public Double getOtherCurrentLiabilities() {
 		return liabilities.getOtherCurrentLiabilities();
 	}
 
-	public double getTotalCurrentLiabilitiesCalculated() {
+	public Double getTotalCurrentLiabilitiesCalculated() {
 		return liabilities.getTotalCurrentLiabilitiesCalculated();
 	}
 
-	public double getTotalLiabilities() {
+	public Double getTotalLiabilities() {
 		return liabilities.getTotalLiabilities();
 	}
 
-	public double getTotalCurrentLiabilities() {
+	public Double getTotalCurrentLiabilities() {
 		return liabilities.getTotalCurrentLiabilities();
 	}
 
-	public double getMiscStocksOptionsWarrants() {
+	public Double getMiscStocksOptionsWarrants() {
 		return stockholdersEquity.getMiscStocksOptionsWarrants();
 	}
 
-	public double getRedeemablePreferredStocks() {
+	public Double getRedeemablePreferredStocks() {
 		return stockholdersEquity.getRedeemablePreferredStocks();
 	}
 
-	public double getCommonStock() {
+	public Double getCommonStock() {
 		return stockholdersEquity.getCommonStock();
 	}
 
-	public double getPreferredStock() {
+	public Double getPreferredStock() {
 		return stockholdersEquity.getPreferredStock();
 	}
 
-	public double getRetainedEarnings() {
+	public Double getRetainedEarnings() {
 		return stockholdersEquity.getRetainedEarnings();
 	}
 
-	public double getTreasuryStock() {
+	public Double getTreasuryStock() {
 		return stockholdersEquity.getTreasuryStock();
 	}
 
-	public double getCapitalSurplus() {
+	public Double getCapitalSurplus() {
 		return stockholdersEquity.getCapitalSurplus();
 	}
 
-	public double getOtherstockholdersEquity() {
+	public Double getOtherStockholdersEquity() {
 		return stockholdersEquity.getOtherstockholdersEquity();
 	}
 

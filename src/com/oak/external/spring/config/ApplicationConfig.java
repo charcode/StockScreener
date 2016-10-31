@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.oak.api.finance.repository.BalanceSheetRepository;
 import com.oak.api.finance.repository.CompanyRepository;
 import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
@@ -16,9 +17,12 @@ import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
 import com.oak.external.finance.app.marketdata.api.CashFlowStatementDao;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
 import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
+import com.oak.external.finance.app.marketdata.api.FinancialStatementsProvider;
 import com.oak.external.finance.app.marketdata.api.IncomeStatementDao;
 import com.oak.external.finance.app.marketdata.api.MarketDataProvider;
 import com.oak.external.finance.app.marketdata.api.SectorsCompaniesYahooWebDao;
+import com.oak.external.finance.app.marketdata.api.impl.FinancialStatementsConverter;
+import com.oak.external.finance.app.marketdata.api.impl.FinancialStatementsProviderImpl;
 import com.oak.external.finance.app.marketdata.api.impl.MarketDataPollingProviderImpl;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConnector;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConverter;
@@ -86,6 +90,8 @@ public class ApplicationConfig {
 	private SectorRepository sectorRepository;
 	@Autowired
 	private Screen0ResultsRepository screeningResultsRepository;
+	@Autowired
+	private BalanceSheetRepository balanceSheetRepository;
 	
 	@Bean
 	ApplicationServer app() {
@@ -207,12 +213,28 @@ public class ApplicationConfig {
 		log.debug("creating incomeStatementDao...done ");
 		return yahooWebDataCashFlowStatementDao; 
 	}
+	
+	@Bean
+	FinancialStatementsProvider financialStatementsProvider() {
+		log.debug("creating financialStatementsProvider... instance of FinancialStatementsProviderImpl");
+		Logger logger = LogManager .getFormatterLogger(FinancialStatementsProviderImpl.class);
+		FinancialStatementsProviderImpl financialStatementsProvider = new FinancialStatementsProviderImpl(financialDataDao(), balanceSheetRepository,statementsConverter(), logger);
+		log.debug("creating financialStatementsProvider...done ");
+		return financialStatementsProvider;
+	}
+	@Bean
+	FinancialStatementsConverter statementsConverter() {
+		Logger logger = LogManager.getFormatterLogger(FinancialStatementsProviderImpl.class);
+		FinancialStatementsConverter statementsConverter = new FinancialStatementsConverter(logger);
+		return statementsConverter;
+	}
+	
 	@Bean
 	FinanceAnalysisController financeAnalysisController() {
 		log.debug("creating financeAnalysisController...");
 		Logger logger = LogManager .getFormatterLogger(FinanceFundamentalAnalysisControllerImpl.class);
 		FinanceFundamentalAnalysisControllerImpl financeFundamentalAnalysisController = new FinanceFundamentalAnalysisControllerImpl(
-				financialDataDao(), 
+				financialStatementsProvider(), 
 				targetMinCurrentRatio, targetMinQuickRatio, targetMinAssetToDebtRatio, logger);
 		log.debug("creating financeAnalysisController...done");
 		return financeFundamentalAnalysisController;
