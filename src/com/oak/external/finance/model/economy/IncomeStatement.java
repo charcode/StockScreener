@@ -284,10 +284,10 @@ public class IncomeStatement {
 
 
     public IncomeStatement(
-	    	String symbol, 
-	    	double researchDevelopment,
-	    	double sellingGeneralAndAdministrative, 
-	    	double nonRecurring,
+	    String symbol, 
+	    double researchDevelopment,
+	    double sellingGeneralAndAdministrative, 
+	    double nonRecurring,
 		double otherOperatingExpenses, 
 		double totalOperatingExpenses,
 		double totalOtherIncomeExpensesNet,
@@ -301,9 +301,9 @@ public class IncomeStatement {
 		double extraordinaryItems, 
 		double effectOfAccountingChanges,
 		double otherItems, 
-		double netIncome                        
-		,double preferredStockAndOtherAdjustments
-		,double netIncomeApplicableToCommonShares
+		double netIncome,
+		double preferredStockAndOtherAdjustments,
+		double netIncomeApplicableToCommonShares
 	    ) {
 	
 	this.operatingExpenses = new OperatingExpenses(researchDevelopment, sellingGeneralAndAdministrative, nonRecurring, otherOperatingExpenses, totalOperatingExpenses);

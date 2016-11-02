@@ -92,6 +92,7 @@ public class YahooFinancialJsonDataModel {
 					YahooLongVal effectOfAccountingCharges;
 					YahooLongVal otherItems;
 					YahooLongVal netIncome;
+					YahooLongVal preferredStockAndOtherAdjustments;
 					YahooLongVal netIncomeApplicableToCommonShares;
 				}
 

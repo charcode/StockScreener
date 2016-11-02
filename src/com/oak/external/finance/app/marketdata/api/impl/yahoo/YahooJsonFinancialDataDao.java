@@ -20,9 +20,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.oak.api.finance.model.BalanceSheet;
+import com.oak.api.finance.model.CashFlowStatement;
 import com.oak.api.finance.model.FinancialData;
 import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooFinancialJsonDataModel.QuoteSummary.Result.BalanceSheetHistory.BalanceSheetData;
+import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooFinancialJsonDataModel.QuoteSummary.Result.CashflowStatement;
+import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooFinancialJsonDataModel.QuoteSummary.Result.IncomeStatementHistory.IncomeStatement;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooFinancialJsonDataModel.QuoteSummary.Result.YahooVal;
 
 public class YahooJsonFinancialDataDao implements FinancialDataDao {
@@ -64,20 +67,64 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 							.getBalanceSheetStatements()
 							.stream())
 					.collect(Collectors.toList());
-			
+			List<CashflowStatement>cashflowStatementYearly = financial
+					.getQuoteSummary()
+					.getResult()
+					.stream()
+					.flatMap(r -> r.getCashflowStatementHistory()
+							.getCashflowStatements()
+							.stream())
+					.collect(Collectors.toList());
+			List<CashflowStatement>cashflowStatementQuaterly= financial
+					.getQuoteSummary()
+					.getResult()
+					.stream()
+					.flatMap(r -> r.getCashflowStatementHistoryQuarterly()
+							.getCashflowStatements()
+							.stream())
+					.collect(Collectors.toList());
+			List<IncomeStatement>incomeStatementYearly = financial
+					.getQuoteSummary()
+					.getResult()
+					.stream()
+					.flatMap(r -> r.getIncomeStatementHistory()
+							.getIncomeStatementHistory()
+							.stream())
+					.collect(Collectors.toList());
+			List<IncomeStatement>incomeStatementQuaterly = financial
+					.getQuoteSummary()
+					.getResult()
+					.stream()
+					.flatMap(r -> r.getIncomeStatementHistoryQuarterly()
+							.getIncomeStatementHistory()
+							.stream())
+					.collect(Collectors.toList());
+			// TODO CARRY ON COLLECTING INCOME STATMENTS AND CASHFLOWS STATEMENTS
 			ImmutableMap<YahooVal, BalanceSheetData> balanceSheetPerDateYearly = Maps.uniqueIndex(balanceSheetsYearly, BalanceSheetData::getEndDate);		
 			ImmutableMap<YahooVal, BalanceSheetData> balanceSheetPerDateQuaterly = Maps.uniqueIndex(balanceSheetsQuaterly, BalanceSheetData::getEndDate);		
+			ImmutableMap<YahooVal, CashflowStatement> cashflowStatementPerDateYearly = Maps.uniqueIndex(cashflowStatementYearly, CashflowStatement::getEndDate);		
+			ImmutableMap<YahooVal, CashflowStatement> cashflowStatementPerDateQuaterly = Maps.uniqueIndex(cashflowStatementQuaterly, CashflowStatement::getEndDate);		
+			ImmutableMap<YahooVal, IncomeStatement> incomeStatementPerDateYearly = Maps.uniqueIndex(incomeStatementYearly , IncomeStatement::getEndDate);		
+			ImmutableMap<YahooVal, IncomeStatement> incomeStatementPerDateQuaterly = Maps.uniqueIndex(incomeStatementQuaterly, IncomeStatement::getEndDate);		
 			
 			SortedMap<Date, BalanceSheet> yearlyBalanceSheet = extractBalanceSheetFromYahooRawData(symbol,
 					balanceSheetPerDateYearly);
 			SortedMap<Date, BalanceSheet> quaterlyBalanceSheet = extractBalanceSheetFromYahooRawData(symbol,
 					balanceSheetPerDateQuaterly);
+			SortedMap<Date, CashFlowStatement> yearlyCashflowStatement = 
+					extractCashflowStatementFromYahooRawData(symbol,cashflowStatementPerDateYearly);
+			SortedMap<Date, CashFlowStatement> quarterlyCashflowStatement = 
+					extractCashflowStatementFromYahooRawData(symbol,cashflowStatementPerDateQuaterly);
+			SortedMap<Date, com.oak.external.finance.model.economy.IncomeStatement> yearlyIncomeStatement = 
+					extractIncomeStatementFromYahooRawData(symbol,incomeStatementPerDateYearly);
+			SortedMap<Date, com.oak.external.finance.model.economy.IncomeStatement> quaterlyIncomeStatement = 
+					extractIncomeStatementFromYahooRawData(symbol,incomeStatementPerDateQuaterly);
 			
 			ret = new FinancialData(symbol, yearlyBalanceSheet, quaterlyBalanceSheet, 
-					/* annualCashflowStatement */ null, 
-					/* quarterlyCashflowStatement */ null, 
-					/* annualIncomeStatement */ null, 
-					/* quarterlyIncomeStatement */ null);
+					/* annualCashflowStatement */ yearlyCashflowStatement, 
+					/* quarterlyCashflowStatement */ quarterlyCashflowStatement, 
+					/* annualIncomeStatement */ yearlyIncomeStatement, 
+					/* quarterlyIncomeStatement */ quaterlyIncomeStatement);
 			
 		} catch (IOException e1) {
 			String msg = "Can't " + (json == null ? "get " + url : "parse " + json);
@@ -92,6 +139,40 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 
 		return ret;
 	}
+	private SortedMap<Date,com.oak.external.finance.model.economy.IncomeStatement> extractIncomeStatementFromYahooRawData(String symbol,
+			ImmutableMap<YahooVal, IncomeStatement> incomeStatementRawData) throws ParseException {
+		SortedMap<Date,com.oak.external.finance.model.economy.IncomeStatement> ret = new TreeMap<>();
+	
+		for(YahooVal dateVal : incomeStatementRawData.keySet()) {
+			IncomeStatement isd = incomeStatementRawData.get(dateVal);
+			Date date = f.parse(dateVal.getFmt());
+			com.oak.external.finance.model.economy.IncomeStatement is = new com.oak.external.finance.model.economy.IncomeStatement(
+					symbol,
+			getDoubleFromYahooVal(isd.getResearchDevelopment()),
+			getDoubleFromYahooVal(isd.getSellingGeneralAdministrative()),
+			getDoubleFromYahooVal(isd.getNonRecurring()),
+			getDoubleFromYahooVal(isd.getOtherOperatingExpenses()),
+			getDoubleFromYahooVal(isd.getTotalOperatingExpenses()),
+			getDoubleFromYahooVal(isd.getTotalOtherIncomeExpenseNet()),
+			getDoubleFromYahooVal(isd.getEbit()),// TODO CAN'T FIND getIncomBeforeTaxAndInterest
+			getDoubleFromYahooVal(isd.getInterestExpense()),
+			getDoubleFromYahooVal(isd.getIncomeBeforeTax()),
+			getDoubleFromYahooVal(isd.getIncomeTaxExpense()),
+			getDoubleFromYahooVal(isd.getMinorityInterest()),
+			getDoubleFromYahooVal(isd.getNetIncomeFromContinuingOps()),
+			getDoubleFromYahooVal(isd.getDiscontinuedOperations()),
+			getDoubleFromYahooVal(isd.getExtraordinaryItems()),
+			getDoubleFromYahooVal(isd.getEffectOfAccountingCharges()),
+			getDoubleFromYahooVal(isd.getOtherItems()),
+			getDoubleFromYahooVal(isd.getNetIncome()),
+			getDoubleFromYahooVal(isd.getPreferredStockAndOtherAdjustments()), // TODO CAN'T FIND getPreferredstockandotheradjustments()),
+			getDoubleFromYahooVal(isd.getNetIncomeApplicableToCommonShares())
+			);
+			ret.put(date,is);
+		}
+		return ret;
+	}
+
 	private SortedMap<Date, BalanceSheet> extractBalanceSheetFromYahooRawData(String symbol,
 			ImmutableMap<YahooVal, BalanceSheetData> balanceSheetRawData) throws ParseException {
 		SortedMap<Date,BalanceSheet>yearlyBalanceSheet = new TreeMap<>();
@@ -137,9 +218,43 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 		}
 		return yearlyBalanceSheet;
 	}
+	
+	private SortedMap<Date,com.oak.api.finance.model.CashFlowStatement> extractCashflowStatementFromYahooRawData(
+			String symbol,
+			ImmutableMap<YahooVal, CashflowStatement> cashflowStatementRawData
+			) throws ParseException{
+		SortedMap<Date,com.oak.api.finance.model.CashFlowStatement>ret = new TreeMap<>();
+		for(YahooVal dateVal : cashflowStatementRawData.keySet()) {
+			CashflowStatement cfs = cashflowStatementRawData.get(dateVal);
+			Date date = f.parse(dateVal.getFmt());
+			
+			com.oak.api.finance.model.CashFlowStatement cf = new com.oak.api.finance.model.CashFlowStatement(symbol,
+					getDoubleFromYahooVal(cfs.getDepreciation()), // depreciation
+					getDoubleFromYahooVal(cfs.getChangeToNetincome()), // adjustmentToNetIncome
+					getDoubleFromYahooVal(cfs.getChangeToAccountReceivables()), // changeToAccountReceivable
+					getDoubleFromYahooVal(cfs.getChangeToLiabilities()),
+					getDoubleFromYahooVal(cfs.getChangeToInventory()),
+					getDoubleFromYahooVal(cfs.getChangeToOperatingActivities()),
+					getDoubleFromYahooVal(cfs.getTotalCashFromOperatingActivities()),
+					getDoubleFromYahooVal(cfs.getCapitalExpenditures()), 
+					getDoubleFromYahooVal(cfs.getInvestments()),
+					getDoubleFromYahooVal(cfs.getOtherCashflowsFromInvestingActivities()),
+					getDoubleFromYahooVal(cfs.getTotalCashflowsFromInvestingActivities()),
+					getDoubleFromYahooVal(cfs.getDividendsPaid()), 
+					getDoubleFromYahooVal(cfs.getSalePurchaseOfStock()),
+					getDoubleFromYahooVal(cfs.getNetBorrowings()),
+					getDoubleFromYahooVal(cfs.getOtherCashflowsFromFinancingActivities()),
+					getDoubleFromYahooVal(cfs.getTotalCashFromFinancingActivities()),
+					getDoubleFromYahooVal(cfs.getNetIncome()), 
+					getDoubleFromYahooVal(cfs.getEffectOfExchangeRate()),
+					getDoubleFromYahooVal(cfs.getChangeInCash()));
+		}
+	     
+	    return ret;
+	} 
 	private Double getDoubleFromYahooVal(YahooVal yahooVal) {
 		Double ret;
-		if(yahooVal != null) {
+		if(yahooVal != null && yahooVal.getRaw() != null) {
 			ret = yahooVal.getRaw();
 		}else {
 			ret = 0.0;
@@ -155,6 +270,12 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 			    .maxBodySize(0)
 			    .timeout(600000)
 				.ignoreContentType(true).execute().body();
+		
+		if(json.indexOf("preferred" )>0) {
+			System.out.println(json);
+			log.info("\n"+json);
+		}
+		
 		ObjectMapper mapper = new ObjectMapper();
 		YahooFinancialJsonDataModel financial = mapper.readValue(json, YahooFinancialJsonDataModel.class);
 		return financial;
