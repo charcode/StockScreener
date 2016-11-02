@@ -1,16 +1,13 @@
 package com.oak.api.finance.repository;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
-import com.oak.api.finance.model.dto.BalanceSheetDto;
+import com.oak.api.finance.model.dto.EarningsCalendar;
 
 @RepositoryRestResource(collectionResourceRel = "balance_sheet", path = "balance_sheets")
-public interface BalanceSheetRepository extends PagingAndSortingRepository<BalanceSheetDto, Long> {
-	
-	List<BalanceSheetDto>findByTicker(String ticker);
-	List<BalanceSheetDto>findByTickerIn(Collection<String> tickers);
+public interface EarningsCalendarRepository extends PagingAndSortingRepository<EarningsCalendar, Long> {
+	List<EarningsCalendar> findByTicker(String ticker);
 }

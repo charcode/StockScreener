@@ -40,7 +40,11 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 	public FinancialData getFinancialDataForSymbol(String symbol, String exchange) {
 		String url = root + symbol + ext;
 		String json = null;
-		FinancialData ret = null;
+		FinancialData ret = new FinancialData(symbol, Maps.newTreeMap(), Maps.newTreeMap(), 
+				/* annualCashflowStatement */ null, 
+				/* quarterlyCashflowStatement */ null, 
+				/* annualIncomeStatement */ null, 
+				/* quarterlyIncomeStatement */ null);;
 		YahooVal parsingvalue = null;
 		try {
 			YahooFinancialJsonDataModel financial = downloadFinancialData(url);
@@ -144,7 +148,13 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 	}
 	private YahooFinancialJsonDataModel downloadFinancialData(String url) throws IOException, JsonParseException, JsonMappingException {
 		String json;
-		json = Jsoup.connect(url).ignoreContentType(true).execute().body();
+		json = Jsoup
+				.connect(url)
+			 	.header("Accept-Encoding", "gzip, deflate")
+			    .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0")
+			    .maxBodySize(0)
+			    .timeout(600000)
+				.ignoreContentType(true).execute().body();
 		ObjectMapper mapper = new ObjectMapper();
 		YahooFinancialJsonDataModel financial = mapper.readValue(json, YahooFinancialJsonDataModel.class);
 		return financial;

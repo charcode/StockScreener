@@ -5,11 +5,17 @@ status="WARN">
     <Console name="Console" target="SYSTEM_OUT">
         <PatternLayout pattern="%d{dd/MM/yyyy HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
     </Console>
-    <File name="MyFile" fileName="logs/yahooFinance.log">
+    <File name="YahooFinanceFile" fileName="logs/yahooFinance.log">
+      <PatternLayout Pattern ="%d{dd/MM/yyyy HH:mm:ss.SSS} %p %c{1.} [%t] %m%n"/>
+    </File>
+    <File name="TeytaFile" fileName="logs/TeytaFinancialCalendar.log">
       <PatternLayout Pattern ="%d{dd/MM/yyyy HH:mm:ss.SSS} %p %c{1.} [%t] %m%n"/>
     </File>
     <Async name="Async">
-      <AppenderRef ref="MyFile"/>
+      <AppenderRef ref="YahooFinanceFile"/>
+    </Async>
+    <Async name="AsyncTeyta">
+      <AppenderRef ref="TeytaFile"/>
     </Async>
 </Appenders>
 <Loggers>
@@ -18,6 +24,12 @@ status="WARN">
     </Logger>
     <Logger name="com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConnector" level="debug" additivity="false">
         <AppenderRef ref="Async"/>
+    </Logger>
+    <Logger name="com.oak.external.finance.app.marketdata.api.impl.yahoo.EarningsCalendarYahooWebDao" level="debug" additivity="false">
+    	<AppenderRef ref="AsyncTeyta"/>
+    </Logger>
+    <Logger name="com.oak.external.finance.app.marketdata.api.impl.MarketDataPollingProviderImpl" level="debug" additivity="false">
+    	<AppenderRef ref="AsyncTeyta"/>
     </Logger>
     
     <Root level="trace">

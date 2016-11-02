@@ -12,6 +12,13 @@ import org.apache.logging.log4j.Logger;
 import com.oak.api.finance.model.BalanceSheet;
 import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
 
+/**
+ * Yahoo changed their website, this parser doesn't work anymore
+ * @author charb
+ *
+ * @param <T>
+ */
+@Deprecated
 public class YahooWebDataBalanceSheetDao extends
 		AbstractYahooFinanceWebParser<BalanceSheet> implements BalanceSheetDao {
 	private static final String LONG_TERM_INVESTMENTS = "Long Term Investments";

@@ -11,11 +11,13 @@ import com.oak.api.finance.repository.BalanceSheetRepository;
 import com.oak.api.finance.repository.CompanyRepository;
 import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
+import com.oak.api.finance.repository.EarningsCalendarRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
 import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
 import com.oak.external.finance.app.marketdata.api.CashFlowStatementDao;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
+import com.oak.external.finance.app.marketdata.api.EarningsCalendarDao;
 import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
 import com.oak.external.finance.app.marketdata.api.FinancialStatementsProvider;
 import com.oak.external.finance.app.marketdata.api.IncomeStatementDao;
@@ -24,6 +26,7 @@ import com.oak.external.finance.app.marketdata.api.SectorsCompaniesYahooWebDao;
 import com.oak.external.finance.app.marketdata.api.impl.FinancialStatementsConverter;
 import com.oak.external.finance.app.marketdata.api.impl.FinancialStatementsProviderImpl;
 import com.oak.external.finance.app.marketdata.api.impl.MarketDataPollingProviderImpl;
+import com.oak.external.finance.app.marketdata.api.impl.yahoo.EarningsCalendarYahooWebDao;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConnector;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooDataConverter;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooJsonFinancialDataDao;
@@ -52,7 +55,14 @@ public class ApplicationConfig {
 	@Value("sector.datasource")
 	private String sectorsUrl;
 	
-	private int waitInMilliseconds = 500;
+	/**
+	 * When market data provider is instantiated, it will try to check the corporate earning calendar
+	 * it does this using a sliding window back, and loads all the financial statements that were issued the 
+	 * last few days. 
+	 * This controls how many days to look back
+	 */
+	private int earningsCalendarWindowBackInDays = 15;
+	private int earningsCalendarWindowForwardInDays = 90;
 	private long historyBackInMilliSeconds = 7 * 24 * 60 * 60 * 1000;
 	// private String stocksFilename = "/stocks/yahoo.csv";
 	private static String ROOT_PATH = "C:\\Users\\charb\\Dropbox\\invest\\";
@@ -92,6 +102,8 @@ public class ApplicationConfig {
 	private Screen0ResultsRepository screeningResultsRepository;
 	@Autowired
 	private BalanceSheetRepository balanceSheetRepository;
+	@Autowired
+	private EarningsCalendarRepository earningsCalendarRepository;
 	
 	@Bean
 	ApplicationServer app() {
@@ -141,12 +153,10 @@ public class ApplicationConfig {
 	@Bean
 	MarketDataProvider marketDataProvider() {
 		log.debug("creating marketDataProvider...");
-		MarketDataProvider marketDataPollingProvider = new MarketDataPollingProviderImpl(
-				yahooConnector(),
-				waitInMilliseconds,
-				historyBackInMilliSeconds,
-				LogManager
-						.getFormatterLogger(MarketDataPollingProviderImpl.class));
+		MarketDataProvider marketDataPollingProvider = new MarketDataPollingProviderImpl(yahooConnector(),
+				earningsCalendarDao(), earningsCalendarRepository, balanceSheetRepository,
+				financialStatementsProvider(), earningsCalendarWindowBackInDays,
+				earningsCalendarWindowForwardInDays, LogManager.getFormatterLogger(MarketDataPollingProviderImpl.class));
 		log.debug("creating marketDataProvider...done");
 		return marketDataPollingProvider;
 	}
@@ -190,6 +200,7 @@ public class ApplicationConfig {
 		log.debug("creating yahooJsonFinancialDataDao...done");
 		return yahooJsonFinancialDataDao;
 	}
+	@Deprecated
 	@Bean
 	BalanceSheetDao balanceSheetDao() {
 		log.debug("creating balanceSheetDao...");
@@ -217,8 +228,9 @@ public class ApplicationConfig {
 	@Bean
 	FinancialStatementsProvider financialStatementsProvider() {
 		log.debug("creating financialStatementsProvider... instance of FinancialStatementsProviderImpl");
-		Logger logger = LogManager .getFormatterLogger(FinancialStatementsProviderImpl.class);
-		FinancialStatementsProviderImpl financialStatementsProvider = new FinancialStatementsProviderImpl(financialDataDao(), balanceSheetRepository,statementsConverter(), logger);
+		Logger logger = LogManager.getFormatterLogger(FinancialStatementsProviderImpl.class);
+		FinancialStatementsProviderImpl financialStatementsProvider = new FinancialStatementsProviderImpl(
+				financialDataDao(), balanceSheetRepository, statementsConverter(), logger);
 		log.debug("creating financialStatementsProvider...done ");
 		return financialStatementsProvider;
 	}
@@ -244,9 +256,25 @@ public class ApplicationConfig {
 	SectorsCompaniesYahooWebDao sectorsCompaniesDao() {
 		log.debug("creating sectorDao...");
 		Logger logger = LogManager.getFormatterLogger(YahooWebDataSectorCompaniesDao.class);
-		WebParsingUtils webParsingUtils = new WebParsingUtils();
-		SectorsCompaniesYahooWebDao dao = new YahooWebDataSectorCompaniesDao(logger,sectorsUrl, webParsingUtils);
+		SectorsCompaniesYahooWebDao dao = new YahooWebDataSectorCompaniesDao(logger,sectorsUrl, webParsingUtils());
 		log.debug("creating sectorDao...done");
 		return dao;
+	}
+
+	@Bean
+	 WebParsingUtils webParsingUtils() {
+		log.debug("creating webParsingUtils...");
+		WebParsingUtils webParsingUtils = new WebParsingUtils();
+		log.debug("creating webParsingUtils...Done");
+		return webParsingUtils;
+	}
+	@Bean
+	EarningsCalendarDao earningsCalendarDao() {
+		log.debug("creating earningsCalendarDao...");
+		Logger logger = LogManager.getFormatterLogger(EarningsCalendarYahooWebDao.class);
+		String url = "https://biz.yahoo.com/research/earncal/";
+		log.debug("creating earningsCalendarDao...Done");
+		EarningsCalendarDao ret = new EarningsCalendarYahooWebDao(logger, url, webParsingUtils());
+		return ret;
 	}
 }

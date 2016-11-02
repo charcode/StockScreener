@@ -27,6 +27,13 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
+/**
+ * Yahoo changed their website, this parser doesn't work anymore
+ * @author charb
+ *
+ * @param <T>
+ */
+@Deprecated
 public abstract class AbstractYahooFinanceWebParser<T> {
 	private static String datesText = "Period Ending";
 	private static String spaceBreak = String.valueOf((char) 160);

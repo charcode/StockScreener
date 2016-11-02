@@ -1,6 +1,5 @@
 package com.oak.external.finance.app.marketdata.api.impl;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.HashSet;
@@ -48,7 +47,7 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 			Date lastPeriod = dbFinancials.getQuarterlyBalanceSheet().lastKey();
 			ZonedDateTime ninetyDaysAgo = ZonedDateTime.now().plusDays(-90);
 			oldOrMissingFinancials = lastPeriod.toInstant().isBefore(ninetyDaysAgo.toInstant());
-			logger.info((oldOrMissingFinancials?"N":"No n")+"eed to download balance sheet for ["+ticker+"]. Latest saved is from "+lastPeriod);
+			logger.info(ticker+": "+(oldOrMissingFinancials?"N":"No n")+"eed to download balance sheet for ["+ticker+"]. Latest saved is from "+lastPeriod);
 		}
 		if(oldOrMissingFinancials) {
 			logger.info("downloading balance sheet for ["+ticker+"]");
@@ -79,6 +78,7 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 			if (saved.getStatementPeriod().equals(newB.getStatementPeriod())
 					&& saved.getEndDate().compareTo(newB.getEndDate()) == 0) {
 				ret = false;
+				logger.info(newB.getTicker()+ " nothing to save, latest downloaded match old: " + newB.getEndDate());
 				break;
 			}
 		}

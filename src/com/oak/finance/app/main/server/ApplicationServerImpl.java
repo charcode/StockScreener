@@ -35,7 +35,6 @@ public class ApplicationServerImpl implements ApplicationServer {
 	@Override
 	public void start() {
 		log.info(ApplicationServerImpl.class.getCanonicalName()+" starting up ");
-		
 		Set<String> symbols = symbolsProvider.getSymbols();
 		Set<String> interestingSymbols = symbolsProvider.getInterestingSymbols();
 		log.debug("found "+symbols.size()+" symbol.");
