@@ -11,27 +11,44 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.Logger;
 
 import com.oak.api.finance.model.BalanceSheet;
+import com.oak.api.finance.model.CashFlowStatement;
 import com.oak.api.finance.model.FinancialData;
+import com.oak.api.finance.model.dto.AbstractFinancialStatement;
 import com.oak.api.finance.model.dto.BalanceSheetDto;
+import com.oak.api.finance.model.dto.CashFlowStatementDto;
+import com.oak.api.finance.model.dto.IncomeStatementDto;
 import com.oak.api.finance.model.dto.StatementPeriod;
 import com.oak.api.finance.repository.BalanceSheetRepository;
+import com.oak.api.finance.repository.CashFlowStatementRepository;
+import com.oak.api.finance.repository.IncomeStatementRepository;
 import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
 import com.oak.external.finance.app.marketdata.api.FinancialStatementsProvider;
+import com.oak.external.finance.model.economy.IncomeStatement;
 
 public class FinancialStatementsProviderImpl implements FinancialStatementsProvider {
 
 	private final FinancialDataDao financialDataDao;
 	private final BalanceSheetRepository balanceSheetRepository;
+	private final IncomeStatementRepository incomeStatementRepository;
+	private final CashFlowStatementRepository cashFlowStatementRepository;
 	private final Logger logger;
 	private final FinancialStatementsConverter statementsConverter;
+	private BalanceSheetConverter balanceSheetConverter;
+	private CashflowStatmentConverter cashflowConverter;
+	private IncomeStatementConverter incomeStatmentConverter;
 
 	public FinancialStatementsProviderImpl(FinancialDataDao financialDataDao,
 			BalanceSheetRepository balanceSheetRepository, FinancialStatementsConverter statementsConverter,
-			Logger logger) {
+			IncomeStatementRepository incomeStatementRepository, CashFlowStatementRepository cashFlowStatementRepository, Logger logger) {
 		this.financialDataDao = financialDataDao;
 		this.balanceSheetRepository = balanceSheetRepository;
+		this.cashFlowStatementRepository = cashFlowStatementRepository;
+		this.incomeStatementRepository = incomeStatementRepository;
 		this.statementsConverter = statementsConverter;
 		this.logger = logger;
+		this.balanceSheetConverter = new BalanceSheetConverter();
+		this.cashflowConverter = new CashflowStatmentConverter();
+		this.incomeStatmentConverter = new IncomeStatementConverter();
 	}
 
 	@Override
@@ -39,8 +56,11 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 		logger.info("Getting financial statements for " + ticker);
 
 		List<BalanceSheetDto> balanceSheetsInDb = balanceSheetRepository.findByTicker(ticker);
+		List<CashFlowStatementDto> cashFlowStatementsInDb = cashFlowStatementRepository.findByTicker(ticker);
+		List<IncomeStatementDto> incomeStatementsInDb = incomeStatementRepository.findByTicker(ticker);
 
-		FinancialData dbFinancials = statementsConverter.getFinancialData(ticker, balanceSheetsInDb);
+		FinancialData dbFinancials = statementsConverter.getFinancialData(ticker, balanceSheetsInDb, cashFlowStatementsInDb, incomeStatementsInDb);
+		
 		boolean oldOrMissingFinancials = true;
 		FinancialData financialData;
 		if(!dbFinancials.getQuarterlyBalanceSheet().isEmpty()) {
@@ -56,15 +76,32 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 					null /* some provider of financial statements data need an exchange supplied, some don't */);
 			SortedMap<Date, BalanceSheet> annualBalanceSheet = financialData.getAnnualBalanceSheet();
 			SortedMap<Date, BalanceSheet> quarterlyBalanceSheet = financialData.getQuarterlyBalanceSheet();
+			SortedMap<Date, CashFlowStatement> annualCashflowStatement = financialData.getAnnualCashflowStatement();
+			SortedMap<Date, CashFlowStatement> quarterlyCashflowStatement = financialData.getQuarterlyCashflowStatement();
+			SortedMap<Date, IncomeStatement> annualIncomeStatement = financialData.getAnnualIncomeStatement();
+			SortedMap<Date, IncomeStatement> quarterlyIncomeStatement = financialData.getQuarterlyIncomeStatement();
+			
 			Set<BalanceSheetDto> balanceSheets = new HashSet<>();
-			extractBalanceSheets(annualBalanceSheet, balanceSheets, StatementPeriod.ANNUAL);
-			extractBalanceSheets(quarterlyBalanceSheet, balanceSheets, StatementPeriod.QUARTERLY);
+			Set<CashFlowStatementDto> cashflowStatements = new HashSet<>();
+			Set<IncomeStatementDto> incomeStatements = new HashSet<>();
+			
+			extractFinancialData(annualBalanceSheet, balanceSheets, StatementPeriod.ANNUAL, balanceSheetConverter);
+			extractFinancialData(quarterlyBalanceSheet, balanceSheets, StatementPeriod.QUARTERLY, balanceSheetConverter);
+			
+			extractFinancialData(annualCashflowStatement, cashflowStatements, StatementPeriod.QUARTERLY, cashflowConverter);
+			extractFinancialData(quarterlyCashflowStatement, cashflowStatements, StatementPeriod.QUARTERLY, cashflowConverter);
+			
+			extractFinancialData(annualIncomeStatement, incomeStatements, StatementPeriod.QUARTERLY, incomeStatmentConverter);
+			extractFinancialData(quarterlyIncomeStatement, incomeStatements, StatementPeriod.QUARTERLY, incomeStatmentConverter);
 
 			// extract new balance sheets that need to be written to the DB
-			Set<BalanceSheetDto> toBeSaved = balanceSheets.stream()
-					.filter(b -> balanceSheetNotSaved(b, balanceSheetsInDb))
-					.collect(Collectors.toSet());
-			balanceSheetRepository.save(toBeSaved);
+			Set<BalanceSheetDto> bsToBeSaved = filterFinancialDataToBeSaved(balanceSheetsInDb, balanceSheets);
+			Set<CashFlowStatementDto> cfToBeSaved = filterFinancialDataToBeSaved(cashFlowStatementsInDb,
+					cashflowStatements);
+			Set<IncomeStatementDto> isToBeSaved = filterFinancialDataToBeSaved(incomeStatementsInDb, incomeStatements);
+			balanceSheetRepository.save(bsToBeSaved);
+			cashFlowStatementRepository.save(cfToBeSaved);
+			incomeStatementRepository.save(isToBeSaved);
 		} else {
 			financialData = dbFinancials;
 		}
@@ -72,26 +109,62 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 		return financialData;
 	}
 
-	private boolean balanceSheetNotSaved(BalanceSheetDto newB, List<BalanceSheetDto> balanceSheetsInDb) {
+	private <T extends AbstractFinancialStatement> Set<T> filterFinancialDataToBeSaved(List<T> financialDataInDb,
+			Set<T> newFinancialData) {
+		Set<T> toBeSaved = newFinancialData.stream()
+				.filter(b -> financialDataNotSaved(b, financialDataInDb))
+				.collect(Collectors.toSet());
+		return toBeSaved;
+	}
+
+	private <T extends AbstractFinancialStatement> boolean financialDataNotSaved(T newData, List<T> financialDataInDb) {
 		boolean ret = true;
-		for (BalanceSheetDto saved : balanceSheetsInDb) {
-			if (saved.getStatementPeriod().equals(newB.getStatementPeriod())
-					&& saved.getEndDate().compareTo(newB.getEndDate()) == 0) {
+		for (T saved : financialDataInDb) {
+			if (saved.getStatementPeriod().equals(newData.getStatementPeriod())
+					&& saved.getEndDate().compareTo(newData.getEndDate()) == 0) {
 				ret = false;
-				logger.info(newB.getTicker()+ " nothing to save, latest downloaded match old: " + newB.getEndDate());
+				logger.info(newData.getTicker()+ " nothing to save, latest downloaded match old: " + newData.getEndDate());
 				break;
 			}
 		}
 		return ret;
 	}
 
-	private void extractBalanceSheets(SortedMap<Date, BalanceSheet> annualBalanceSheet,
-			Set<BalanceSheetDto> balanceSheets, StatementPeriod p) {
-		annualBalanceSheet.keySet().stream().forEach(d -> {
-			BalanceSheet balanceSheet = annualBalanceSheet.get(d);
-			BalanceSheetDto dto = statementsConverter.convertYahooToDbBalanceSheet(balanceSheet, d, p);
-			balanceSheets.add(dto);
+	private <I,O> void extractFinancialData(SortedMap<Date, I> financialDataIn,
+			Set<O> financialDataOut, StatementPeriod p, Converter<I,O> c) {
+		financialDataIn.keySet().stream().forEach(d -> {
+			I balanceSheet = financialDataIn.get(d);
+			O dto = c.convert(balanceSheet, d, p);
+			financialDataOut.add(dto);
 		});
 	}
+	
+	private interface Converter<I,O>{
+		O convert (I i, Date d,StatementPeriod period);
+	}
 
+	private class BalanceSheetConverter implements Converter<BalanceSheet,BalanceSheetDto>{
+
+		@Override
+		public BalanceSheetDto convert(BalanceSheet i, Date d,StatementPeriod period) {
+			return statementsConverter.convertYahooToDbBalanceSheet(i, d, period);
+		}
+		
+	}
+	private class IncomeStatementConverter implements Converter<IncomeStatement,IncomeStatementDto>{
+		
+		@Override
+		public IncomeStatementDto convert(IncomeStatement i, Date d,StatementPeriod period) {
+			return statementsConverter.convertYahooToDbIncomeStatement(i, d, period);
+		}
+		
+	}
+	private class CashflowStatmentConverter implements Converter<CashFlowStatement,CashFlowStatementDto>{
+		
+		@Override
+		public CashFlowStatementDto convert(CashFlowStatement i, Date d,StatementPeriod period) {
+			return statementsConverter.convertYahooToDbCashFlowStatement(i, d, period);
+		}
+		
+	}
 }

@@ -1,30 +1,17 @@
 package com.oak.api.finance.model.dto;
 
-import java.util.Date;
-
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.Table;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper=true)
 @Entity
 @Table(name="balance_sheet")
-public class BalanceSheetDto /* implements Comparable<BalanceSheetDto> */{
-	
-	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO) 
-	private Long id;
-	private String ticker;
-	private Date endDate;
-	@Enumerated(EnumType.STRING)
-	private StatementPeriod statementPeriod;
-	private Date releaseDate;
+public class BalanceSheetDto extends AbstractFinancialStatement{
+
 	private Double cashAndEquivalent;
 	private Double shortTermInvestments;
 	private Double netReceivables;

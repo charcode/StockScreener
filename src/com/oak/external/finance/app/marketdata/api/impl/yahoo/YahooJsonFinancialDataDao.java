@@ -99,7 +99,7 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 							.getIncomeStatementHistory()
 							.stream())
 					.collect(Collectors.toList());
-			// TODO CARRY ON COLLECTING INCOME STATMENTS AND CASHFLOWS STATEMENTS
+
 			ImmutableMap<YahooVal, BalanceSheetData> balanceSheetPerDateYearly = Maps.uniqueIndex(balanceSheetsYearly, BalanceSheetData::getEndDate);		
 			ImmutableMap<YahooVal, BalanceSheetData> balanceSheetPerDateQuaterly = Maps.uniqueIndex(balanceSheetsQuaterly, BalanceSheetData::getEndDate);		
 			ImmutableMap<YahooVal, CashflowStatement> cashflowStatementPerDateYearly = Maps.uniqueIndex(cashflowStatementYearly, CashflowStatement::getEndDate);		
@@ -154,7 +154,7 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 			getDoubleFromYahooVal(isd.getOtherOperatingExpenses()),
 			getDoubleFromYahooVal(isd.getTotalOperatingExpenses()),
 			getDoubleFromYahooVal(isd.getTotalOtherIncomeExpenseNet()),
-			getDoubleFromYahooVal(isd.getEbit()),// TODO CAN'T FIND getIncomBeforeTaxAndInterest
+			getDoubleFromYahooVal(isd.getEbit()),
 			getDoubleFromYahooVal(isd.getInterestExpense()),
 			getDoubleFromYahooVal(isd.getIncomeBeforeTax()),
 			getDoubleFromYahooVal(isd.getIncomeTaxExpense()),
@@ -248,6 +248,7 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 					getDoubleFromYahooVal(cfs.getNetIncome()), 
 					getDoubleFromYahooVal(cfs.getEffectOfExchangeRate()),
 					getDoubleFromYahooVal(cfs.getChangeInCash()));
+			ret.put(date,cf);
 		}
 	     
 	    return ret;

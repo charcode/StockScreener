@@ -59,7 +59,6 @@ public class CashFlowStatement {
 	public int hashCode() {
 	    final int prime = 31;
 	    int result = 1;
-	    result = prime * result + getOuterType().hashCode();
 	    long temp;
 	    temp = Double.doubleToLongBits(adjustmentsToNetIncome);
 	    result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -88,8 +87,6 @@ public class CashFlowStatement {
 	    if (getClass() != obj.getClass())
 		return false;
 	    OperatingActivities other = (OperatingActivities) obj;
-	    if (!getOuterType().equals(other.getOuterType()))
-		return false;
 	    if (Double.doubleToLongBits(adjustmentsToNetIncome) != Double
 		    .doubleToLongBits(other.adjustmentsToNetIncome))
 		return false;
@@ -112,10 +109,6 @@ public class CashFlowStatement {
 		    .doubleToLongBits(other.totalCashFlowFromOperatingActivities))
 		return false;
 	    return true;
-	}
-
-	private CashFlowStatement getOuterType() {
-	    return CashFlowStatement.this;
 	}
     }
 
@@ -156,7 +149,6 @@ public class CashFlowStatement {
 	public int hashCode() {
 	    final int prime = 31;
 	    int result = 1;
-	    result = prime * result + getOuterType().hashCode();
 	    long temp;
 	    temp = Double.doubleToLongBits(capitalExpenditures);
 	    result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -180,8 +172,6 @@ public class CashFlowStatement {
 	    if (getClass() != obj.getClass())
 		return false;
 	    InvestingActivities other = (InvestingActivities) obj;
-	    if (!getOuterType().equals(other.getOuterType()))
-		return false;
 	    if (Double.doubleToLongBits(capitalExpenditures) != Double
 		    .doubleToLongBits(other.capitalExpenditures))
 		return false;
@@ -195,10 +185,6 @@ public class CashFlowStatement {
 		    .doubleToLongBits(other.totalCashFlowsFromInvestingActivities))
 		return false;
 	    return true;
-	}
-
-	private CashFlowStatement getOuterType() {
-	    return CashFlowStatement.this;
 	}
 
     }
@@ -246,7 +232,6 @@ public class CashFlowStatement {
 	public int hashCode() {
 	    final int prime = 31;
 	    int result = 1;
-	    result = prime * result + getOuterType().hashCode();
 	    long temp;
 	    temp = Double.doubleToLongBits(dividendsPaid);
 	    result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -270,8 +255,6 @@ public class CashFlowStatement {
 	    if (getClass() != obj.getClass())
 		return false;
 	    FinancingActivities other = (FinancingActivities) obj;
-	    if (!getOuterType().equals(other.getOuterType()))
-		return false;
 	    if (Double.doubleToLongBits(dividendsPaid) != Double
 		    .doubleToLongBits(other.dividendsPaid))
 		return false;
@@ -288,10 +271,6 @@ public class CashFlowStatement {
 		    .doubleToLongBits(other.totalCashFlowsFromFinancingActivities))
 		return false;
 	    return true;
-	}
-
-	private CashFlowStatement getOuterType() {
-	    return CashFlowStatement.this;
 	}
 
     }
@@ -411,6 +390,9 @@ public class CashFlowStatement {
 
     public double getChangeInCashAndCashEquivalents() {
 	return changeInCashAndCashEquivalents;
+    }
+    public String getSymbol() {
+    	return symbol;
     }
 
     @Override

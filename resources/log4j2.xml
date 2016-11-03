@@ -31,9 +31,16 @@ status="WARN">
     <Logger name="com.oak.external.finance.app.marketdata.api.impl.MarketDataPollingProviderImpl" level="debug" additivity="false">
     	<AppenderRef ref="AsyncTeyta"/>
     </Logger>
+    <Logger name="com.oak.finance.app.monitor.analysis.FinanceFundamentalAnalysisControllerImpl" level="debug" additivity="false">
+    	<AppenderRef ref="AsyncTeyta"/>
+    </Logger>
+    <Logger name="com.oak.external.finance.app.marketdata.api.impl.FinancialStatementsProviderImpl" level="debug" additivity="false">
+    	<AppenderRef ref="AsyncTeyta"/>
+    </Logger>
     
     <Root level="trace">
         <AppenderRef ref="Console"/>
+        <AppenderRef ref="AsyncTeyta"/>
     </Root>
 </Loggers>
 </Configuration>

@@ -281,7 +281,7 @@ public class IncomeStatement {
     private final double netIncome                        ;
     private final double preferredStockAndOtherAdjustments;
     private final double netIncomeApplicableToCommonShares;
-
+    private final String symbol;
 
     public IncomeStatement(
 	    String symbol, 
@@ -312,6 +312,7 @@ public class IncomeStatement {
 	this.netIncome                        =netIncome                        ;
 	this.preferredStockAndOtherAdjustments=preferredStockAndOtherAdjustments;
 	this.netIncomeApplicableToCommonShares=netIncomeApplicableToCommonShares;
+	this.symbol = symbol;
     }
 
 
@@ -385,6 +386,9 @@ public class IncomeStatement {
 	}
 
 
+    public String getSymbol() {
+    	return symbol;
+    }
 	@Override
 	public int hashCode() {
 	    final int prime = 31;

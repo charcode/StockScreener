@@ -8,10 +8,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.oak.api.finance.repository.BalanceSheetRepository;
+import com.oak.api.finance.repository.CashFlowStatementRepository;
 import com.oak.api.finance.repository.CompanyRepository;
 import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
 import com.oak.api.finance.repository.EarningsCalendarRepository;
+import com.oak.api.finance.repository.IncomeStatementRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
 import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
@@ -102,6 +104,10 @@ public class ApplicationConfig {
 	private Screen0ResultsRepository screeningResultsRepository;
 	@Autowired
 	private BalanceSheetRepository balanceSheetRepository;
+	@Autowired
+	private IncomeStatementRepository incomeStatementRepository;
+	@Autowired
+	private CashFlowStatementRepository cashFlowStatementRepository;
 	@Autowired
 	private EarningsCalendarRepository earningsCalendarRepository;
 	
@@ -230,7 +236,7 @@ public class ApplicationConfig {
 		log.debug("creating financialStatementsProvider... instance of FinancialStatementsProviderImpl");
 		Logger logger = LogManager.getFormatterLogger(FinancialStatementsProviderImpl.class);
 		FinancialStatementsProviderImpl financialStatementsProvider = new FinancialStatementsProviderImpl(
-				financialDataDao(), balanceSheetRepository, statementsConverter(), logger);
+				financialDataDao(), balanceSheetRepository, statementsConverter(), incomeStatementRepository, cashFlowStatementRepository, logger);
 		log.debug("creating financialStatementsProvider...done ");
 		return financialStatementsProvider;
 	}
