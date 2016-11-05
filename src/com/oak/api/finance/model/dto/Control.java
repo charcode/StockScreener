@@ -1,6 +1,7 @@
 package com.oak.api.finance.model.dto;
 
-import java.sql.Date;
+
+import java.util.Date;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;

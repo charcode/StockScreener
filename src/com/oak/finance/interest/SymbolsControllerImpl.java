@@ -4,8 +4,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -281,13 +281,13 @@ public class SymbolsControllerImpl implements SymbolsController {
 		
 		boolean symbolsReloadNeeded = true;
 		if (symbolAndSectorRefresh != null && !symbolAndSectorRefresh.isEmpty()) {
-			TreeMap<java.sql.Date, List<Control>> refreshes = new TreeMap<>(
+			TreeMap<Date, List<Control>> refreshes = new TreeMap<>(
 					symbolAndSectorRefresh.stream().collect(Collectors.groupingBy(Control::getTimeStamp)));
 			LocalDate lastRefresh = null;
-			for (java.sql.Date refreshDate : refreshes.descendingKeySet()) {
+			for (Date refreshDate : refreshes.descendingKeySet()) {
 				for (Control ref : refreshes.get(refreshDate)) {
 					if (ref.getStatus().equals(Status.SUCCESS)) {
-						lastRefresh = refreshDate.toLocalDate();
+						lastRefresh = refreshDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 						break;
 					}
 				}

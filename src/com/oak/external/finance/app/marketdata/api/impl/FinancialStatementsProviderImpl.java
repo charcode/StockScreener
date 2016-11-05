@@ -132,11 +132,15 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 
 	private <I,O> void extractFinancialData(SortedMap<Date, I> financialDataIn,
 			Set<O> financialDataOut, StatementPeriod p, Converter<I,O> c) {
+		if(financialDataIn != null) {
 		financialDataIn.keySet().stream().forEach(d -> {
 			I balanceSheet = financialDataIn.get(d);
 			O dto = c.convert(balanceSheet, d, p);
 			financialDataOut.add(dto);
 		});
+		}else {
+			logger.warn("No financial data to convert");
+		}
 	}
 	
 	private interface Converter<I,O>{
