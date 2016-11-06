@@ -16,6 +16,8 @@ import com.oak.api.finance.repository.EarningsCalendarRepository;
 import com.oak.api.finance.repository.IncomeStatementRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
+import com.oak.api.providers.control.ControlProvider;
+import com.oak.api.providers.control.impl.ControlProviderImpl;
 import com.oak.external.finance.app.marketdata.api.BalanceSheetDao;
 import com.oak.external.finance.app.marketdata.api.CashFlowStatementDao;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
@@ -42,6 +44,8 @@ import com.oak.external.utils.input.api.impl.FileStreamProvider;
 import com.oak.external.utils.web.WebParsingUtils;
 import com.oak.finance.app.dao.SymbolsDao;
 import com.oak.finance.app.dao.impl.files.SymbolsFileDao;
+import com.oak.finance.app.main.controllers.ApplicationController;
+import com.oak.finance.app.main.controllers.ApplicationMainControllerImpl;
 import com.oak.finance.app.main.server.ApplicationServer;
 import com.oak.finance.app.main.server.ApplicationServerImpl;
 import com.oak.finance.app.monitor.MarketDataMonitorsController;
@@ -112,11 +116,22 @@ public class ApplicationConfig {
 	private EarningsCalendarRepository earningsCalendarRepository;
 	
 	@Bean
-	ApplicationServer app() {
+	ApplicationServer appServer() {
+		log.debug("Creating appServer ...");
+		Logger appLog = LogManager.getFormatterLogger(ApplicationServerImpl.class);
+		ApplicationServer ret = new ApplicationServerImpl(appController(), appLog);
+		log.debug("Creating appServer ... Done");
+		return ret;
+	}
+	
+	@Bean
+	ApplicationController appController() {
 		log.debug("creating app...");
-		ApplicationServerImpl applicationServer = new ApplicationServerImpl(
+		ApplicationMainControllerImpl applicationServer = new ApplicationMainControllerImpl(
 				symbolController(), marketDataMonitorsController(),
-				screeningResultsRepository, LogManager.getFormatterLogger(ApplicationServerImpl.class));
+				screeningResultsRepository, earningsCalendarRepository, 
+				balanceSheetRepository, cashFlowStatementRepository, 
+				incomeStatementRepository, companyRepository, LogManager.getFormatterLogger(ApplicationMainControllerImpl.class));
 		log.debug("creating app...done");
 		return applicationServer;
 	}
@@ -126,9 +141,10 @@ public class ApplicationConfig {
 		log.debug("creating stockListProvider...");
 		SymbolsControllerImpl symbolController = new SymbolsControllerImpl(
 				symbolsDao(), sectorsCompaniesDao(), 
-				controlRepository, companyRepository, 
+				controlProvider(), companyRepository, 
 				companyWithProblemsRepository, sectorRepository, 
-				screeningResultsRepository, LogManager.getFormatterLogger(SymbolsControllerImpl.class));
+				screeningResultsRepository, yahooConnector(), companyRepository, 
+				LogManager.getFormatterLogger(SymbolsControllerImpl.class));
 		log.debug("creating stockListProvider...done");
 		return symbolController;
 	}
@@ -161,8 +177,8 @@ public class ApplicationConfig {
 		log.debug("creating marketDataProvider...");
 		MarketDataProvider marketDataPollingProvider = new MarketDataPollingProviderImpl(yahooConnector(),
 				earningsCalendarDao(), earningsCalendarRepository, balanceSheetRepository,
-				financialStatementsProvider(), earningsCalendarWindowBackInDays,
-				earningsCalendarWindowForwardInDays, LogManager.getFormatterLogger(MarketDataPollingProviderImpl.class));
+				financialStatementsProvider(), controlProvider(),
+				earningsCalendarWindowBackInDays, earningsCalendarWindowForwardInDays, LogManager.getFormatterLogger(MarketDataPollingProviderImpl.class));
 		log.debug("creating marketDataProvider...done");
 		return marketDataPollingProvider;
 	}
@@ -282,5 +298,14 @@ public class ApplicationConfig {
 		log.debug("creating earningsCalendarDao...Done");
 		EarningsCalendarDao ret = new EarningsCalendarYahooWebDao(logger, url, webParsingUtils());
 		return ret;
+	}
+	
+	@Bean
+	ControlProvider controlProvider() {
+		log.debug("creating controlProvider....");
+		Logger contrlLogger = LogManager.getFormatterLogger(ControlProviderImpl.class);
+		ControlProvider controlProvider = new ControlProviderImpl(controlRepository,contrlLogger);
+		log.debug("creating controlProvider...Done!");
+		return controlProvider;
 	}
 }

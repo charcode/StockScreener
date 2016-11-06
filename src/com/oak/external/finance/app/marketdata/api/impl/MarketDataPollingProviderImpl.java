@@ -17,9 +17,13 @@ import org.springframework.data.util.StreamUtils;
 import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
 import com.oak.api.finance.model.dto.BalanceSheetDto;
+import com.oak.api.finance.model.dto.Control;
 import com.oak.api.finance.model.dto.EarningsCalendar;
+import com.oak.api.finance.model.dto.Status;
 import com.oak.api.finance.repository.BalanceSheetRepository;
 import com.oak.api.finance.repository.EarningsCalendarRepository;
+import com.oak.api.providers.control.ControlProvider;
+import com.oak.api.providers.control.ControlType;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
 import com.oak.external.finance.app.marketdata.api.EarningsCalendarDao;
 import com.oak.external.finance.app.marketdata.api.FinancialStatementsProvider;
@@ -34,14 +38,15 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 	private final BalanceSheetRepository balanceSheetRepository;
 	private final int earningsCalendarWindowBackInDays;
 	private final int earningsCalendarWindowForwardInDays;
+	private final ControlProvider controlProvider;
 	private boolean stop;
 	private boolean started;
 	private final Logger log;
 
 	public MarketDataPollingProviderImpl(DataConnector dataConnector, EarningsCalendarDao earningsCalendarDao,
 			EarningsCalendarRepository earningsCalendarRepository, BalanceSheetRepository balanceSheetRepository,
-			FinancialStatementsProvider financialsProvider, int earningsCalendarWindowBackInDays,
-			int earningsCalendarWindowForwardInDays, Logger log) {
+			FinancialStatementsProvider financialsProvider, ControlProvider controlProvider,
+			int earningsCalendarWindowBackInDays, int earningsCalendarWindowForwardInDays, Logger log) {
 		this.earningsCalendarWindowBackInDays = earningsCalendarWindowBackInDays;
 		this.earningsCalendarWindowForwardInDays = earningsCalendarWindowForwardInDays;
 		this.dataConnector = dataConnector;
@@ -50,6 +55,7 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 		this.earningsCalendarRepository = earningsCalendarRepository;
 		this.earningsCalendarDao = earningsCalendarDao;
 		this.financialsProvider = financialsProvider;
+		this.controlProvider = controlProvider;
 		this.log = log == null ? LogManager.getLogger(MarketDataPollingProviderImpl.class) : log;
 
 		new Thread() {
@@ -61,19 +67,34 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 	}
 
 	private void initEarningsCalendarRefresh() {
-		log.info("Starting earnings calendar and financial statement collection thread");
-		Iterable<EarningsCalendar> savedCals = earningsCalendarRepository.findAll();
-		List<EarningsCalendar> newCals = downloadCalendarsForTheLastDays(savedCals);
-		List<String> calendarsTickers = newCals.stream().map(n -> n.getTicker()).collect(Collectors.toList());
-		List<BalanceSheetDto> savedBalanceSheets = balanceSheetRepository.findByTickerIn(calendarsTickers);
-		Map<String, List<BalanceSheetDto>> bsSavedPerTicker = savedBalanceSheets.stream()
-				.collect(Collectors.groupingBy(BalanceSheetDto::getTicker));
-		// save to db
-		for (EarningsCalendar newEc : newCals) {
+		Control latestEarningCalendar = controlProvider.getLatestControlByType(ControlType.EARNINGS_CALENDAR);
+		Calendar lastEarningsUpdate = Calendar.getInstance();
+		Calendar today = Calendar.getInstance();
+		today.setTime(new Date());
+		lastEarningsUpdate.setTime(latestEarningCalendar.getTimeStamp());
+		boolean sameDay = lastEarningsUpdate.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+				lastEarningsUpdate.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR);
 
-			refreshFinancialStatementsForCompanyIfNecessary(bsSavedPerTicker, newEc);
+		if (!sameDay) {
+			log.info("Starting earnings calendar and financial statement collection thread");
+
+			Iterable<EarningsCalendar> savedCals = earningsCalendarRepository.findAll();
+			List<EarningsCalendar> newCals = downloadCalendarsForTheLastDays(savedCals);
+			List<String> calendarsTickers = newCals.stream().map(n -> n.getTicker()).collect(Collectors.toList());
+			List<BalanceSheetDto> savedBalanceSheets = balanceSheetRepository.findByTickerIn(calendarsTickers);
+			Map<String, List<BalanceSheetDto>> bsSavedPerTicker = savedBalanceSheets.stream()
+					.collect(Collectors.groupingBy(BalanceSheetDto::getTicker));
+			// save to db
+			for (EarningsCalendar newEc : newCals) {
+
+				refreshFinancialStatementsForCompanyIfNecessary(bsSavedPerTicker, newEc);
+			}
+			earningsCalendarRepository.save(newCals);
+			Control control = Control.newControl(ControlType.EARNINGS_CALENDAR,Status.SUCCESS,"loaded earnings calendars");
+			controlProvider.save(control);
+		}else {
+			log.info("Calendars already loaded today.. skipping, last load: "+latestEarningCalendar);
 		}
-		earningsCalendarRepository.save(newCals);
 	}
 
 	private void refreshFinancialStatementsForCompanyIfNecessary(Map<String, List<BalanceSheetDto>> bsSavedPerTicker,

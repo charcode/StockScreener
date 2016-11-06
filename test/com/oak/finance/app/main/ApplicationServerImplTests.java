@@ -11,17 +11,22 @@ import org.mockito.Mockito;
 import org.mockito.internal.util.collections.Sets;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.oak.api.finance.repository.BalanceSheetRepository;
+import com.oak.api.finance.repository.CashFlowStatementRepository;
+import com.oak.api.finance.repository.CompanyRepository;
+import com.oak.api.finance.repository.EarningsCalendarRepository;
+import com.oak.api.finance.repository.IncomeStatementRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.external.finance.app.marketdata.api.MarketDataProvider;
-import com.oak.finance.app.main.server.ApplicationServer;
-import com.oak.finance.app.main.server.ApplicationServerImpl;
+import com.oak.finance.app.main.controllers.ApplicationController;
+import com.oak.finance.app.main.controllers.ApplicationMainControllerImpl;
 import com.oak.finance.app.monitor.MarketDataMonitorsController;
 import com.oak.finance.interest.SymbolsController;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ApplicationServerImplTests {
 
-	private ApplicationServer undertest;
+	private ApplicationController undertest;
 	@Mock
 	MarketDataProvider marketDataProvider ;
 	@Mock
@@ -33,6 +38,16 @@ public class ApplicationServerImplTests {
 	
 	@Mock
 	Screen0ResultsRepository screeningResultsRepository;
+	@Mock
+	EarningsCalendarRepository earningsCalendarRepository;
+	@Mock
+	BalanceSheetRepository balanceSheetRepository;
+	@Mock
+	CashFlowStatementRepository cashFlowStatementRepository;
+	@Mock
+	IncomeStatementRepository incomeStatementRepository;
+	@Mock
+	CompanyRepository companyRepository;
 	
 	@Before
 	public void setUp() throws Exception {		
@@ -45,6 +60,8 @@ public class ApplicationServerImplTests {
 		Mockito.when(stockListProvider.getSymbols()).thenReturn(symbols);
 
 		
-		undertest = new ApplicationServerImpl(stockListProvider, marketDataMonitorsFactory, screeningResultsRepository, log);
+		undertest = new ApplicationMainControllerImpl(stockListProvider, marketDataMonitorsFactory, 
+				screeningResultsRepository, earningsCalendarRepository, balanceSheetRepository, 
+				cashFlowStatementRepository, incomeStatementRepository, companyRepository, log);
 	}
 }

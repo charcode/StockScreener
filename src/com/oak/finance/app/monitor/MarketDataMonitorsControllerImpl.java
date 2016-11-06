@@ -43,7 +43,7 @@ public class MarketDataMonitorsControllerImpl implements MarketDataMonitorsContr
 	private final StocksCallback callback;
 	private final Map<Stock, Map<Date, Economic>> endMarker;
 
-	public MarketDataMonitorsControllerImpl(SymbolsController symbolsProvider,
+	public MarketDataMonitorsControllerImpl(SymbolsController symbolsController,
 			FinanceAnalysisController analysisController, MarketDataProvider marketDataProvider, Logger logger) {
 		logger.debug("creating MarketDataMonitorsControllerImpl");
 		this.newStocksWithoutPrices = new LinkedBlockingQueue<String>();
@@ -51,7 +51,7 @@ public class MarketDataMonitorsControllerImpl implements MarketDataMonitorsContr
 		this.logger = logger;
 		this.executor = Executors.newCachedThreadPool();
 		this.analysisController = analysisController;
-		this.symbolsProvider = symbolsProvider;
+		this.symbolsProvider = symbolsController;
 		this.marketDataProvider = marketDataProvider;
 		this.callback = new StocksCallback();
 		logger.debug("starting the wait loop");

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
+import com.oak.api.finance.model.dto.Company;
 import com.oak.api.finance.model.dto.Screen0Result;
 
 /**
@@ -27,4 +28,6 @@ public interface SymbolsController {
 	Set<String> getInterestingSymbols();
 
 	Collection<Screen0Result> retriedLegacyResultsFromFile();
+
+	void saveNewCompanies(Set<Company> companies);
 }

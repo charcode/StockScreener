@@ -34,7 +34,6 @@ import com.oak.api.finance.model.Stock;
 import com.oak.api.finance.model.dto.Company;
 import com.oak.api.finance.model.dto.CompanyWithProblems;
 import com.oak.api.finance.model.dto.Control;
-import com.oak.api.finance.model.dto.ControlType;
 import com.oak.api.finance.model.dto.ErrorType;
 import com.oak.api.finance.model.dto.Screen0Result;
 import com.oak.api.finance.model.dto.Sector;
@@ -44,6 +43,8 @@ import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
+import com.oak.api.providers.control.ControlProvider;
+import com.oak.api.providers.control.ControlType;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
 import com.oak.external.finance.app.marketdata.api.SectorsCompaniesYahooWebDao;
 import com.oak.finance.app.dao.SymbolsDao;
@@ -56,31 +57,30 @@ public class SymbolsControllerImpl implements SymbolsController {
 
 	private final SymbolsDao symbolsTextFileDao;
 	private final SectorsCompaniesYahooWebDao sectorCompaniesDao;
-	private final ControlRepository controlRepository;
+	private final ControlProvider controlProvider;
 	private final CompanyRepository companyRepository;
 	private final CompanyWithProblemsRepository companyWithErrorsRepository;
 	private final SectorRepository sectorRepository;
 	private final Logger log;
 	private final Period maxTimeBeforeRefresh = Period.ofMonths(3);
 	private final Screen0ResultsRepository screeningResultsRepository;
-	@Autowired
-	private DataConnector dataConnector;
-	@Autowired
-	private CompanyRepository newCompRep;
-	@Autowired
-	private Screen0ResultsRepository newResRep;
+	private final DataConnector dataConnector;
+	private final CompanyRepository newCompRep;
 
 	public SymbolsControllerImpl(SymbolsDao symbolsDao, SectorsCompaniesYahooWebDao sectorCompaniesDao,
-			ControlRepository controlRepository, CompanyRepository companyRepository,
+			ControlProvider controlProvider, CompanyRepository companyRepository,
 			CompanyWithProblemsRepository companyWithErrorsRepository, SectorRepository sectorRepository,
-			Screen0ResultsRepository screeningResultsRepository, Logger log) {
+			Screen0ResultsRepository screeningResultsRepository, DataConnector dataConnector, CompanyRepository newCompRep, 
+			Logger log) {
 		this.symbolsTextFileDao = symbolsDao;
 		this.sectorCompaniesDao = sectorCompaniesDao;
-		this.controlRepository = controlRepository;
+		this.controlProvider = controlProvider;
 		this.companyRepository = companyRepository;
 		this.companyWithErrorsRepository = companyWithErrorsRepository;
 		this.sectorRepository = sectorRepository;
 		this.screeningResultsRepository = screeningResultsRepository;
+		this.dataConnector = dataConnector;
+		this.newCompRep = companyRepository;
 		Logger mylog;
 		if (log == null) {
 			mylog = LogManager.getLogger(this.getClass());
@@ -196,7 +196,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 					}
 				}
 			}
-			newResRep.save(newResults);
+			screeningResultsRepository.save(newResults);
 		}
 	}
 
@@ -277,46 +277,46 @@ public class SymbolsControllerImpl implements SymbolsController {
 	    cleanupExistingResultsInDb(); 
 	    populateExistingResultsInDb();
 		 */
-		Collection<Control> symbolAndSectorRefresh = controlRepository.findByType(ControlType.SYMBOL_SECTOR_REFRESH);
+//		Collection<Control> symbolAndSectorRefresh = controlRepository.findByType(ControlType.SYMBOL_SECTOR_REFRESH);
 		
 		boolean symbolsReloadNeeded = true;
-		if (symbolAndSectorRefresh != null && !symbolAndSectorRefresh.isEmpty()) {
-			TreeMap<Date, List<Control>> refreshes = new TreeMap<>(
-					symbolAndSectorRefresh.stream().collect(Collectors.groupingBy(Control::getTimeStamp)));
-			LocalDate lastRefresh = null;
-			for (Date refreshDate : refreshes.descendingKeySet()) {
-				for (Control ref : refreshes.get(refreshDate)) {
-					if (ref.getStatus().equals(Status.SUCCESS)) {
-						lastRefresh = refreshDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-						break;
-					}
-				}
-				if (lastRefresh != null) {
-					break;
-				}
-			}
-			LocalDate now = LocalDate.now();
-			if (lastRefresh == null) {
-				log.info("No record of successful symbols refresh");
+//		if (symbolAndSectorRefresh != null && !symbolAndSectorRefresh.isEmpty()) {
+//			TreeMap<Date, List<Control>> refreshes = new TreeMap<>(
+//					symbolAndSectorRefresh.stream().collect(Collectors.groupingBy(Control::getTimeStamp)));
+//			LocalDate lastRefresh = null;
+//			for (Date refreshDate : refreshes.descendingKeySet()) {
+//				for (Control ref : refreshes.get(refreshDate)) {
+//					if (ref.getStatus().equals(Status.SUCCESS)) {
+//						lastRefresh = refreshDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+//						break;
+//					}
+//				}
+//				if (lastRefresh != null) {
+//					break;
+//				}
+//			}
+		Control lastSymbolLoad = controlProvider.getLatestControlByType(ControlType.SYMBOL_SECTOR_REFRESH);
+		LocalDate lastRefresh = lastSymbolLoad.getTimeStamp().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalDate now = LocalDate.now();
+		if (lastRefresh == null) {
+			log.info("No record of successful symbols refresh");
+			symbolsReloadNeeded = true;
+		} else {
+			int daysSinceLastRefresh = Period.between(now, lastRefresh).getDays();
+			if (daysSinceLastRefresh > maxTimeBeforeRefresh.getDays()) {
+				log.info("It's been " + daysSinceLastRefresh + " days since last symbol refresh, we need to refresh");
 				symbolsReloadNeeded = true;
 			} else {
-				int daysSinceLastRefresh = Period.between(now, lastRefresh).getDays();
-				if (daysSinceLastRefresh > maxTimeBeforeRefresh.getDays()) {
-					log.info("It's been " + daysSinceLastRefresh
-							+ " days since last symbol refresh, we need to refresh");
-					symbolsReloadNeeded = true;
-				} else {
-					log.info("It's been only" + daysSinceLastRefresh
-							+ " days since last symbol refresh, no need for refresh");
-					symbolsReloadNeeded = false;
-				}
+				log.info("It's been only" + daysSinceLastRefresh
+						+ " days since last symbol refresh, no need for refresh");
+				symbolsReloadNeeded = false;
 			}
 		}
 		Set<String> symbols;
 		if (symbolsReloadNeeded) {
 			Pair<Control, Set<String>> symbolsAndControl = refrehSymbols();
 			Control control = symbolsAndControl.getLeft();
-			controlRepository.save(control);
+			controlProvider.save(control);
 			symbols = symbolsAndControl.getRight();
 		} else {
 			Iterable<Company> companies = companyRepository.findAll();
@@ -569,6 +569,11 @@ public class SymbolsControllerImpl implements SymbolsController {
 	public Collection<Screen0Result> retriedLegacyResultsFromFile() {
 		Collection<Screen0Result> results = symbolsTextFileDao.readPreviousResults();
 		return results;
+	}
+
+	@Override
+	public void saveNewCompanies(Set<Company> companies) {
+		companyRepository.save(companies);
 	}
 
 }
