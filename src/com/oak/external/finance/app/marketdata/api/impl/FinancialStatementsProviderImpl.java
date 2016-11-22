@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.stream.Collectors;
@@ -59,16 +60,22 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 		List<CashFlowStatementDto> cashFlowStatementsInDb = cashFlowStatementRepository.findByTicker(ticker);
 		List<IncomeStatementDto> incomeStatementsInDb = incomeStatementRepository.findByTicker(ticker);
 
-		FinancialData dbFinancials = statementsConverter.getFinancialData(ticker, balanceSheetsInDb, cashFlowStatementsInDb, incomeStatementsInDb);
-		
 		boolean oldOrMissingFinancials = true;
 		FinancialData financialData;
-		if(!dbFinancials.getQuarterlyBalanceSheet().isEmpty()) {
-			Date lastPeriod = dbFinancials.getQuarterlyBalanceSheet().lastKey();
-			ZonedDateTime ninetyDaysAgo = ZonedDateTime.now().plusDays(-90);
-			oldOrMissingFinancials = lastPeriod.toInstant().isBefore(ninetyDaysAgo.toInstant());
-			logger.info(ticker+": "+(oldOrMissingFinancials?"N":"No n")+"eed to download balance sheet for ["+ticker+"]. Latest saved is from "+lastPeriod);
-		}
+		FinancialData dbFinancials  = null;
+//		boolean needToCheck = false;
+//		if (needToCheck) {
+			dbFinancials = statementsConverter.getFinancialData(ticker, balanceSheetsInDb,
+					cashFlowStatementsInDb, incomeStatementsInDb);
+
+			if (!dbFinancials.getQuarterlyBalanceSheet().isEmpty()) {
+				Date lastPeriod = dbFinancials.getQuarterlyBalanceSheet().lastKey();
+				ZonedDateTime ninetyDaysAgo = ZonedDateTime.now().plusDays(-90);
+				oldOrMissingFinancials = lastPeriod.toInstant().isBefore(ninetyDaysAgo.toInstant());
+				logger.info(ticker + ": " + (oldOrMissingFinancials ? "N" : "No n")
+						+ "eed to download balance sheet for [" + ticker + "]. Latest saved is from " + lastPeriod);
+			}
+//		}
 		if(oldOrMissingFinancials) {
 			logger.info("downloading balance sheet for ["+ticker+"]");
 
@@ -88,10 +95,10 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 			extractFinancialData(annualBalanceSheet, balanceSheets, StatementPeriod.ANNUAL, balanceSheetConverter);
 			extractFinancialData(quarterlyBalanceSheet, balanceSheets, StatementPeriod.QUARTERLY, balanceSheetConverter);
 			
-			extractFinancialData(annualCashflowStatement, cashflowStatements, StatementPeriod.QUARTERLY, cashflowConverter);
+			extractFinancialData(annualCashflowStatement, cashflowStatements, StatementPeriod.ANNUAL, cashflowConverter);
 			extractFinancialData(quarterlyCashflowStatement, cashflowStatements, StatementPeriod.QUARTERLY, cashflowConverter);
 			
-			extractFinancialData(annualIncomeStatement, incomeStatements, StatementPeriod.QUARTERLY, incomeStatmentConverter);
+			extractFinancialData(annualIncomeStatement, incomeStatements, StatementPeriod.ANNUAL, incomeStatmentConverter);
 			extractFinancialData(quarterlyIncomeStatement, incomeStatements, StatementPeriod.QUARTERLY, incomeStatmentConverter);
 
 			// extract new balance sheets that need to be written to the DB
@@ -99,6 +106,19 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 			Set<CashFlowStatementDto> cfToBeSaved = filterFinancialDataToBeSaved(cashFlowStatementsInDb,
 					cashflowStatements);
 			Set<IncomeStatementDto> isToBeSaved = filterFinancialDataToBeSaved(incomeStatementsInDb, incomeStatements);
+			
+			
+			////////////////////////////////////////////////////////////////////
+			//// LOGIC TO REMOVE incorrect annual statements saved as quarterly
+			Set<BalanceSheetDto> bsToBeDeleted = filterFinancialDataToBeDeleted(balanceSheetsInDb);
+			Set<CashFlowStatementDto> cfToBeDeleted = filterFinancialDataToBeDeleted(cashFlowStatementsInDb);
+			Set<IncomeStatementDto> isToBeDeleted = filterFinancialDataToBeDeleted(incomeStatementsInDb);
+			
+			balanceSheetRepository.delete(bsToBeDeleted);
+			cashFlowStatementRepository.delete(cfToBeDeleted);
+			incomeStatementRepository.delete(isToBeDeleted);
+			/////////////// end ////////////////////////////////////////////
+			
 			balanceSheetRepository.save(bsToBeSaved);
 			cashFlowStatementRepository.save(cfToBeSaved);
 			incomeStatementRepository.save(isToBeSaved);
@@ -108,6 +128,57 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 
 		return financialData;
 	}
+
+	
+	private <T extends AbstractFinancialStatement> Set<T> filterFinancialDataToBeDeleted(List<T> statementsInDb) {
+		Set<T>ret = new HashSet<>();
+		Map<Date, List<T>> byDate = statementsInDb.stream().collect(Collectors.groupingBy(AbstractFinancialStatement::getEndDate));
+		for(Date d : byDate.keySet()) {
+			List<T> fs = byDate.get(d);
+			if(fs.size()>1) {
+				Set<T> qtr = fs.stream().filter(s -> StatementPeriod.QUARTERLY.equals(s.getStatementPeriod())).collect(Collectors.toSet());
+				Set<T> oth = fs.stream().filter(s -> !qtr.contains(s)).collect(Collectors.toSet());
+				for(T s:qtr) {
+					Long id = s.getId();
+					StatementPeriod p = s.getStatementPeriod();
+					for(T o:oth) {
+						s.setId(o.getId());
+						s.setStatementPeriod(o.getStatementPeriod());
+						if(s.equals(o)) {
+							ret.add(s);
+						}						
+					}
+					s.setId(id);
+					s.setStatementPeriod(p);
+				}
+			}
+		}
+		return ret;
+	}
+
+	private <T extends AbstractFinancialStatement> boolean incorrectFinancialStatement(T newData, List<T> statementsInDb) {
+		boolean ret = false;
+		Set<T> savedWithSameEndDate = statementsInDb.stream()
+				.filter(d -> 
+				d.getEndDate().compareTo(newData.getEndDate()) == 0
+				).collect(Collectors.toSet());
+		
+		if(savedWithSameEndDate.contains(newData)) {
+			System.out.println(newData);
+		}
+		StatementPeriod sp = newData.getStatementPeriod();
+		newData.setStatementPeriod(StatementPeriod.ANNUAL);
+		if(savedWithSameEndDate.contains(newData)) {
+			ret = true;
+		}else {
+			Set<String> toStr = savedWithSameEndDate.stream().map(t -> t.getTicker() + " "+t.getEndDate()).collect(Collectors.toSet());
+			System.out.println(toStr);
+		}
+		newData.setStatementPeriod(sp);
+		
+		return ret;
+	}
+
 
 	private <T extends AbstractFinancialStatement> Set<T> filterFinancialDataToBeSaved(List<T> financialDataInDb,
 			Set<T> newFinancialData) {

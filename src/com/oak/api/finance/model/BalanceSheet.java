@@ -62,7 +62,6 @@ public class BalanceSheet {
 			public int hashCode() {
 				final int prime = 31;
 				int result = 1;
-				result = prime * result + getOuterType().hashCode();
 				long temp;
 				temp = Double.doubleToLongBits(cashAndEquivalent);
 				result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -172,7 +171,6 @@ public class BalanceSheet {
 			public int hashCode() {
 				final int prime = 31;
 				int result = 1;
-				result = prime * result + getOuterType().hashCode();
 				long temp;
 				temp = Double.doubleToLongBits(accumulatedAmortization);
 				result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -319,7 +317,6 @@ public class BalanceSheet {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + getOuterType().hashCode();
 			result = prime * result
 					+ ((currentAssets == null) ? 0 : currentAssets.hashCode());
 			result = prime
@@ -404,7 +401,6 @@ public class BalanceSheet {
 			public int hashCode() {
 				final int prime = 31;
 				int result = 1;
-				result = prime * result + getOuterType().hashCode();
 				long temp;
 				temp = Double.doubleToLongBits(accountPayable);
 				result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -493,7 +489,6 @@ public class BalanceSheet {
 			public int hashCode() {
 				final int prime = 31;
 				int result = 1;
-				result = prime * result + getOuterType().hashCode();
 				long temp;
 				temp = Double
 						.doubleToLongBits(deferredLongTermLiabilityCharges);
@@ -611,7 +606,6 @@ public class BalanceSheet {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + getOuterType().hashCode();
 			result = prime
 					* result
 					+ ((currentLiabilities == null) ? 0 : currentLiabilities
@@ -715,7 +709,6 @@ public class BalanceSheet {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + getOuterType().hashCode();
 			long temp;
 			temp = Double.doubleToLongBits(capitalSurplus);
 			result = prime * result + (int) (temp ^ (temp >>> 32));

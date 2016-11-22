@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import com.oak.external.spring.config.ApplicationConfig;
 import com.oak.finance.app.main.controllers.ApplicationController;
+import com.oak.finance.app.main.server.ApplicationServer;
 
 @Configuration
 @EnableAutoConfiguration
@@ -27,16 +28,14 @@ public class EntryPoint implements CommandLineRunner{
 		logger.info("Starting application");
 		
 		SpringApplication.run(EntryPoint.class, args);
-//		ApplicationContext ctx = new AnnotationConfigApplicationContext(ApplicationConfig.class);
-//		ctx.getBean(ApplicationServer.class).start();
 		
 	}
 	@Autowired
-	ApplicationController server;
+	ApplicationServer server;
 
 	@Override
 	public void run(String... arg0) throws Exception {
 		logger.info("Starting the app");
-		server.onStartUp();
+		server.start();
 	}
 }

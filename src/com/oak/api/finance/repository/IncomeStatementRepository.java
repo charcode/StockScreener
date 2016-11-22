@@ -17,6 +17,8 @@ public interface IncomeStatementRepository extends PagingAndSortingRepository<In
 	List<IncomeStatementDto>findByTickerIn(Collection<String> tickers);
 	
 	
+	@Query("SELECT DISTINCT i.ticker FROM IncomeStatementDto i")
+	Set<String> findDistinctTicker();
 	@Query("SELECT DISTINCT i.ticker FROM IncomeStatementDto i WHERE i.ticker NOT IN ?1")
 	Set<String> findDistinctTickerNotIn(Set<String> tickers);
 }

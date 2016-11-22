@@ -37,7 +37,6 @@ public class IncomeStatement {
 	public int hashCode() {
 	    final int prime = 31;
 	    int result = 1;
-	    result = prime * result + getOuterType().hashCode();
 	    long temp;
 	    temp = Double.doubleToLongBits(nonRecurring);
 	    result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -143,7 +142,6 @@ public class IncomeStatement {
 	public int hashCode() {
 	    final int prime = 31;
 	    int result = 1;
-	    result = prime * result + getOuterType().hashCode();
 	    long temp;
 	    temp = Double.doubleToLongBits(earningsBeforeInterestAndTaxes);
 	    result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -232,7 +230,6 @@ public class IncomeStatement {
 	public int hashCode() {
 	    final int prime = 31;
 	    int result = 1;
-	    result = prime * result + getOuterType().hashCode();
 	    long temp;
 	    temp = Double.doubleToLongBits(discontinuedOperations);
 	    result = prime * result + (int) (temp ^ (temp >>> 32));

@@ -7,6 +7,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.oak.api.MainController;
+import com.oak.api.MainControllerImpl;
+import com.oak.api.finance.dao.DuplicateCashflowDaoImpl;
+import com.oak.api.finance.dao.DuplicateCashflowsDao;
 import com.oak.api.finance.repository.BalanceSheetRepository;
 import com.oak.api.finance.repository.CashFlowStatementRepository;
 import com.oak.api.finance.repository.CompanyRepository;
@@ -54,6 +58,7 @@ import com.oak.finance.app.monitor.analysis.FinanceAnalysisController;
 import com.oak.finance.app.monitor.analysis.FinanceFundamentalAnalysisControllerImpl;
 import com.oak.finance.interest.SymbolsController;
 import com.oak.finance.interest.SymbolsControllerImpl;
+import com.oak.view.vaadin.main.StockScreenerControlUI;
 
 @Configuration
 public class ApplicationConfig {
@@ -123,6 +128,10 @@ public class ApplicationConfig {
 		log.debug("Creating appServer ... Done");
 		return ret;
 	}
+	@Bean
+	DuplicateCashflowsDao duplicateCashflowsDao() {
+		return new DuplicateCashflowDaoImpl();
+	}
 	
 	@Bean
 	ApplicationController appController() {
@@ -131,7 +140,8 @@ public class ApplicationConfig {
 				symbolController(), marketDataMonitorsController(),
 				screeningResultsRepository, earningsCalendarRepository, 
 				balanceSheetRepository, cashFlowStatementRepository, 
-				incomeStatementRepository, companyRepository, LogManager.getFormatterLogger(ApplicationMainControllerImpl.class));
+				incomeStatementRepository, companyRepository, duplicateCashflowsDao(), 
+				financialStatementsProvider(), LogManager.getFormatterLogger(ApplicationMainControllerImpl.class));
 		log.debug("creating app...done");
 		return applicationServer;
 	}
@@ -308,4 +318,20 @@ public class ApplicationConfig {
 		log.debug("creating controlProvider...Done!");
 		return controlProvider;
 	}
+	@Bean 
+	MainController mainController() {
+		log.debug("creating mainController....");
+		MainControllerImpl controller = new MainControllerImpl(appController(),screeningResultsRepository,
+				controlRepository);
+		log.debug("creating mainController...Done!");
+		return controller;
+	}
+	@Bean
+	StockScreenerControlUI ui() {
+		log.debug("creating mainController....");
+		StockScreenerControlUI ui = new StockScreenerControlUI(mainController());
+		log.debug("creating mainController...Done!");
+		return ui;
+	}
+	
 }

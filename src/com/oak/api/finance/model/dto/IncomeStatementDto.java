@@ -32,5 +32,4 @@ public class IncomeStatementDto extends AbstractFinancialStatement
 	private Double	netIncome;
 	private Double	preferredStockAndOtherAdjustments;
 	private Double	netIncomeApplicableToCommonShares;
-
 }

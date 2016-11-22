@@ -17,12 +17,12 @@ public abstract class AbstractFinancialStatement {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long id;
-	private String ticker;
-	private Date endDate;
+	protected Long id;
+	protected String ticker;
+	protected Date endDate;
 	@Enumerated(EnumType.STRING)
-	private StatementPeriod statementPeriod;
-	private Date releaseDate;
+	protected StatementPeriod statementPeriod;
+	protected Date releaseDate;
 
 	public AbstractFinancialStatement() {
 		super();

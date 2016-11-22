@@ -290,6 +290,16 @@ public class FinancialStatementsConverter {
 			}
 		}
 		//////////////////end /////////////////////////////
+		Map<Date, List<T>> noDups = financialStatementInDb.stream()
+				.filter(b -> b.getStatementPeriod().equals(p))
+				.collect(Collectors.groupingBy(T::getEndDate));
+		for(Date d:noDups.keySet()) {
+			if(noDups.get(d).size()>1) {
+				// error .. we should never have this 
+				logger.error("duplicate entry in db");
+			}
+		}
+				
 		Map<Date, DT> statements = financialStatementInDb.stream()
 			.filter(b -> b.getStatementPeriod().equals(p))
 			.collect(Collectors.toMap(T::getEndDate, b-> c.convert(b)));

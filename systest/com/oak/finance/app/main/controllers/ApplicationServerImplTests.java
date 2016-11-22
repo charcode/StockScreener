@@ -1,6 +1,8 @@
-package com.oak.finance.app.main;
+package com.oak.finance.app.main.controllers;
 
 import java.util.Set;
+
+import javax.transaction.Transactional;
 
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
@@ -9,7 +11,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.util.collections.Sets;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import com.oak.api.finance.dao.DuplicateCashflowsDao;
 import com.oak.api.finance.repository.BalanceSheetRepository;
@@ -21,12 +24,12 @@ import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
 import com.oak.external.finance.app.marketdata.api.FinancialStatementsProvider;
 import com.oak.external.finance.app.marketdata.api.MarketDataProvider;
-import com.oak.finance.app.main.controllers.ApplicationController;
-import com.oak.finance.app.main.controllers.ApplicationMainControllerImpl;
 import com.oak.finance.app.monitor.MarketDataMonitorsController;
 import com.oak.finance.interest.SymbolsController;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringRunner.class)
+@Transactional
+@SpringBootTest
 public class ApplicationServerImplTests {
 
 	private ApplicationController undertest;

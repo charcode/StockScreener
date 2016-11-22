@@ -16,8 +16,28 @@ public class ApplicationServerImpl implements ApplicationServer {
 
 	@Override
 	public void start() {
-		log.debug("Starting the main loop");
-		mainController.onStartUp();
+		log.debug("Starting the main app");
+//		mainController.fixWrongQuarterlyStatements();
+//		mainController.launchAnalysis();
+//		mainController.fixDuplicatedCashflows(new DuplicatCashflowListener() {
+//			
+//			@Override
+//			public void onTickersFound(Map<String, List<Date>> tickers) {
+//				System.out.println("found tickers with duplicates: "+tickers.size());
+//			}
+//			
+//			@Override
+//			public void onProgress(String ticker, Date date) {
+//				System.out.println(ticker+ " .. fixing ticker for date: "+ date);
+//			}
+//			
+//			@Override
+//			public void onDone(Status status, String ticker) {
+//				
+//				System.out.println(ticker+ " fixing ticker: "+ status);
+//			}
+//		});
+//
 	}
 
 }

@@ -13,7 +13,6 @@ import lombok.EqualsAndHashCode;
 @Entity
 @Table(name="cashflow_statment")
 public class CashFlowStatementDto extends AbstractFinancialStatement {
-
 	private Double depreciation;
 	private Double adjustmentsToNetIncome;
 	private Double changesInAccountsReceivables;

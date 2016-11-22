@@ -19,6 +19,7 @@ status="WARN">
     </Async>
 </Appenders>
 <Loggers>
+<!-- 
     <Logger name="log4j.test.Log4jTest" level="trace">
         <AppenderRef ref="Console"/>
     </Logger>
@@ -37,7 +38,7 @@ status="WARN">
     <Logger name="com.oak.external.finance.app.marketdata.api.impl.FinancialStatementsProviderImpl" level="debug" additivity="false">
     	<AppenderRef ref="AsyncTeyta"/>
     </Logger>
-    
+     -->
     <Root level="trace">
         <AppenderRef ref="Console"/>
         <AppenderRef ref="AsyncTeyta"/>
