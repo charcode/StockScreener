@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 import com.oak.api.MainController;
 import com.oak.api.MainControllerImpl;
@@ -327,10 +328,11 @@ public class ApplicationConfig {
 		return controller;
 	}
 	@Bean
+	@Scope("prototype") 
 	StockScreenerControlUI ui() {
-		log.debug("creating mainController....");
+		log.debug("creating ui....");
 		StockScreenerControlUI ui = new StockScreenerControlUI(mainController());
-		log.debug("creating mainController...Done!");
+		log.debug("creating ui...Done!");
 		return ui;
 	}
 	

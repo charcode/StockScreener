@@ -39,6 +39,9 @@ status="WARN">
     	<AppenderRef ref="AsyncTeyta"/>
     </Logger>
      -->
+    <Logger name="yahoofinance.YahooFinance" level="debug" additivity="false">
+    	<AppenderRef ref="AsyncTeyta"/>
+    </Logger>
     <Root level="trace">
         <AppenderRef ref="Console"/>
         <AppenderRef ref="AsyncTeyta"/>

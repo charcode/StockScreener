@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import yahoofinance.YahooFinance;
@@ -28,7 +29,7 @@ public class YahooDataConnector implements DataConnector {
 		this.log = log;
 		this.converter = converter;
 		this.yahooWeb = new YahooWebDataBalanceSheetDao(log);
-		connector = new YahooFinance(log);
+		connector = new YahooFinance(LogManager.getLogger(YahooFinance.class));
 	}
 
 	@Override
