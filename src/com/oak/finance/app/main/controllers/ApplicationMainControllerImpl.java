@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.springframework.data.util.StreamUtils;
 
 import com.google.common.collect.Sets;
@@ -47,7 +47,7 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 	private final DuplicateCashflowsDao duplicateCashflowDao;
 	private final FinancialStatementsProvider financialStatementsProvider;
 
-	private final Set<String> tickers;
+	private final ConcurrentSkipListSet<String> tickers;
 
 	public ApplicationMainControllerImpl(SymbolsController symbolController,
 			MarketDataMonitorsController marketDataMonitorsController,
@@ -66,7 +66,7 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 		this.companyRepository = companyRepository;
 		this.duplicateCashflowDao = duplicateCashflowDao;
 		this.financialStatementsProvider = financialStatementsProvider;
-		tickers = new ConcurrentHashSet<>();
+		tickers = new ConcurrentSkipListSet<>();
 		this.log = log;
 		log.info("ApplicationServerImpl starting ....");
 	}
@@ -210,15 +210,16 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 	}
 
 	synchronized private void checkAndSave(ReconcilingRepository rep) {
-
-		Set<String> tickersNotSaved = rep.findDistinctTickerNotIn(tickers);
-		tickers.addAll(tickersNotSaved);
-		Set<Company> companies = tickersNotSaved.stream().map(t -> {
-			Company c = new Company();
-			c.setTicker(t);
-			return c;
-		}).collect(Collectors.toSet());
-		symbolsController.saveNewCompanies(companies);
+		if (!tickers.isEmpty()) {
+			Set<String> tickersNotSaved = rep.findDistinctTickerNotIn(tickers);
+			tickers.addAll(tickersNotSaved);
+			Set<Company> companies = tickersNotSaved.stream().map(t -> {
+				Company c = new Company();
+				c.setTicker(t);
+				return c;
+			}).collect(Collectors.toSet());
+			symbolsController.saveNewCompanies(companies);
+		}
 	}
 
 	@Override

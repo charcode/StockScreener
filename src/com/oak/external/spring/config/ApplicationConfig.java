@@ -154,8 +154,7 @@ public class ApplicationConfig {
 				symbolsDao(), sectorsCompaniesDao(), 
 				controlProvider(), companyRepository, 
 				companyWithProblemsRepository, sectorRepository, 
-				screeningResultsRepository, yahooConnector(), companyRepository, 
-				LogManager.getFormatterLogger(SymbolsControllerImpl.class));
+				screeningResultsRepository, yahooConnector(), LogManager.getFormatterLogger(SymbolsControllerImpl.class));
 		log.debug("creating stockListProvider...done");
 		return symbolController;
 	}

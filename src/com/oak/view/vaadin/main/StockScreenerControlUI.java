@@ -46,7 +46,7 @@ public class StockScreenerControlUI extends UI {
 		
 		
 		controlGrid.setColumns( "timeStamp", "type", "timeStamp", "status", "comments");
-		screen0Grid.setColumns("runDate", "ticker", "companyName", "currency",  "priceBid", "bookValuePerShare", "perCalculated");
+		screen0Grid.setColumns("runDate", "ticker", "priceBid","targetPrice", "per","eps","marketCap","companyName", "currency",  "bookValuePerShare", "perCalculated");
 		controlGrid.setWidth("100%");
 		screen0Grid.setWidth("100%");
 		controlGrid.addSelectionListener(e -> {

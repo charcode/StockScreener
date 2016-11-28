@@ -70,8 +70,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 	public SymbolsControllerImpl(SymbolsDao symbolsDao, SectorsCompaniesYahooWebDao sectorCompaniesDao,
 			ControlProvider controlProvider, CompanyRepository companyRepository,
 			CompanyWithProblemsRepository companyWithErrorsRepository, SectorRepository sectorRepository,
-			Screen0ResultsRepository screeningResultsRepository, DataConnector dataConnector, CompanyRepository newCompRep, 
-			Logger log) {
+			Screen0ResultsRepository screeningResultsRepository, DataConnector dataConnector, Logger log) {
 		this.symbolsTextFileDao = symbolsDao;
 		this.sectorCompaniesDao = sectorCompaniesDao;
 		this.controlProvider = controlProvider;
