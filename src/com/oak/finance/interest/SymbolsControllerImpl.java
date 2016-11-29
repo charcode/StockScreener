@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -60,7 +61,6 @@ public class SymbolsControllerImpl implements SymbolsController {
 	private final CompanyWithProblemsRepository companyWithErrorsRepository;
 	private final SectorRepository sectorRepository;
 	private final Logger log;
-	private final Period maxTimeBeforeRefresh = Period.ofMonths(3);
 	private final Screen0ResultsRepository screeningResultsRepository;
 	private final DataConnector dataConnector;
 	private final CompanyRepository newCompRep;
@@ -316,8 +316,10 @@ public class SymbolsControllerImpl implements SymbolsController {
 			log.info("No record of successful symbols refresh");
 			symbolsReloadNeeded = true;
 		} else {
-			int daysSinceLastRefresh = Period.between(now, lastRefresh).getDays();
-			if (daysSinceLastRefresh > maxTimeBeforeRefresh.getDays()) {
+			long daysSinceLastRefresh = ChronoUnit.DAYS.between(lastRefresh, now);
+			long maxTimeBeforeRefresh = 60;
+//			int daysSinceLastRefresh = Period.between(lastRefresh, now).getDays();
+			if (daysSinceLastRefresh > maxTimeBeforeRefresh) {
 				log.info("It's been " + daysSinceLastRefresh + " days since last symbol refresh, we need to refresh");
 				symbolsReloadNeeded = true;
 			} else {
