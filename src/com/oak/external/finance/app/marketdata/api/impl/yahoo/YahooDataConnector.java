@@ -77,6 +77,7 @@ public class YahooDataConnector implements DataConnector {
 			}
 			j++;
 		}
+		stocksArray = new String [batchList.size()];
 		String[] array = batchList.toArray(stocksArray);
 		batches.add(array);
 		return batches;
