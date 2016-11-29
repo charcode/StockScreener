@@ -17,6 +17,7 @@ public class ApplicationServerImpl implements ApplicationServer {
 	@Override
 	public void start() {
 		log.debug("Starting the main app");
+		mainController.startUp();
 //		mainController.fixWrongQuarterlyStatements();
 //		mainController.launchAnalysis();
 //		mainController.fixDuplicatedCashflows(new DuplicatCashflowListener() {

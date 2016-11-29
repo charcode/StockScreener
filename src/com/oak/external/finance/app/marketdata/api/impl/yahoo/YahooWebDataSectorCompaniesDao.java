@@ -134,17 +134,20 @@ public class YahooWebDataSectorCompaniesDao implements SectorsCompaniesYahooWebD
 								continue;
 							}
 							Element sector = tr.get(0);
-							s.setDescription(sector.text()); //"Sector"
-							s.setOneDayPriceChangePercent(parseDouble(tr.get(1))); //"1 Day Price Change %"
-							s.setMarketCap(parseDouble(tr.get(2))); //"Market Cap"
-							s.setPeRatio(parseDouble(tr.get(3))); //"P/E"
-							s.setRoePercent( parseDouble(tr.get(4))); //"ROE %"
-							s.setDividendYield( parseDouble(tr.get(5))); //"Div. Yield %"
-							s.setLongTermDebtToEquity( parseDouble(tr.get(6))); //"Long-Term Debt to Equity"
-							s.setPriceToBookValue( parseDouble(tr.get(7))); //"Price to Book Value"
-							s.setNetProfitMarginPercent( parseDouble(tr.get(8))); //"Net Profit Margin % (mrq)"
-							s.setPriceToFreeCashFlow( parseDouble(tr.get(9))); //"Price to Free Cash Flow (mrq)"
-							
+							try {
+								s.setDescription(sector.text()); //"Sector"
+								s.setOneDayPriceChangePercent(parseDouble(tr.get(1))); //"1 Day Price Change %"
+								s.setMarketCap(parseDouble(tr.get(2))); //"Market Cap"
+								s.setPeRatio(parseDouble(tr.get(3))); //"P/E"
+								s.setRoePercent( parseDouble(tr.get(4))); //"ROE %"
+								s.setDividendYield( parseDouble(tr.get(5))); //"Div. Yield %"
+								s.setLongTermDebtToEquity( parseDouble(tr.get(6))); //"Long-Term Debt to Equity"
+								s.setPriceToBookValue( parseDouble(tr.get(7))); //"Price to Book Value"
+								s.setNetProfitMarginPercent( parseDouble(tr.get(8))); //"Net Profit Margin % (mrq)"
+								s.setPriceToFreeCashFlow( parseDouble(tr.get(9))); //"Price to Free Cash Flow (mrq)"
+							}catch(NumberFormatException nfe) {
+								log.error("Cannot parse "+url+ " , row: "+tr,nfe);
+							}
 							Elements sectorUrl = sector.select("a");
 							if(! sectorUrl.isEmpty()) {
 								String childUrl = sectorUrl.get(0).attr("href");

@@ -345,4 +345,9 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 		
 	}
 
+	@Override
+	public void startUp() {
+		symbolsController.refreshSymbolsIfNeeded();		
+	}
+
 }

@@ -45,10 +45,12 @@ public class Control implements Comparable<Control>{
 		t.setType(ControlType.NOT_AVAILABLE);
 		t.setComments("NO CONTROL AVAILABLE");
 		t.setStatus(Status.UNKNOWN);
-		Calendar cal = Calendar.getInstance();
-		cal.set(2000, 1, 1);
-		t.setTimeStamp(cal.getTime());
+		t.setTimeStamp(Date.from(Instant.EPOCH));
 		return t;
+	}
+	public static boolean isExist(Control t) {
+		boolean exists = !nonExistant().equals(t);
+		return exists;
 	}
 	public static Control newControl(ControlType controlType,Status status,String comment) {
 		Control t = new Control();

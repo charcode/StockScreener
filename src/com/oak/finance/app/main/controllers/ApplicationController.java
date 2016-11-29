@@ -8,4 +8,6 @@ public interface ApplicationController {
 	void fixDuplicatedCashflows(DuplicatCashflowListener listener);
 
 	void fixWrongQuarterlyStatements();
+
+	void startUp();
 }

@@ -150,7 +150,7 @@ public class ApplicationConfig {
 	@Bean
 	SymbolsController symbolController() {
 		log.debug("creating stockListProvider...");
-		SymbolsControllerImpl symbolController = new SymbolsControllerImpl(
+		SymbolsController symbolController = new SymbolsControllerImpl(
 				symbolsDao(), sectorsCompaniesDao(), 
 				controlProvider(), companyRepository, 
 				companyWithProblemsRepository, sectorRepository, 

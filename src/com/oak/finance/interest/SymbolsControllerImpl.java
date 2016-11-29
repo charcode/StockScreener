@@ -25,7 +25,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.StreamUtils;
 
 import com.oak.api.finance.model.Economic;
@@ -40,7 +39,6 @@ import com.oak.api.finance.model.dto.Sector;
 import com.oak.api.finance.model.dto.Status;
 import com.oak.api.finance.repository.CompanyRepository;
 import com.oak.api.finance.repository.CompanyWithProblemsRepository;
-import com.oak.api.finance.repository.ControlRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
 import com.oak.api.providers.control.ControlProvider;
@@ -278,7 +276,6 @@ public class SymbolsControllerImpl implements SymbolsController {
 		 */
 //		Collection<Control> symbolAndSectorRefresh = controlRepository.findByType(ControlType.SYMBOL_SECTOR_REFRESH);
 		
-		boolean symbolsReloadNeeded = true;
 //		if (symbolAndSectorRefresh != null && !symbolAndSectorRefresh.isEmpty()) {
 //			TreeMap<Date, List<Control>> refreshes = new TreeMap<>(
 //					symbolAndSectorRefresh.stream().collect(Collectors.groupingBy(Control::getTimeStamp)));
@@ -294,8 +291,26 @@ public class SymbolsControllerImpl implements SymbolsController {
 //					break;
 //				}
 //			}
+		Set<String> symbols;
+		Pair<Boolean, Set<String>> refreshSymbolsIfNeeded = refreshSymbolsIfNeeded();
+		if(refreshSymbolsIfNeeded.getLeft()) {
+			symbols = refreshSymbolsIfNeeded.getRight();
+		} else {
+			Iterable<Company> companies = companyRepository.findAll();
+			symbols = StreamUtils.createStreamFromIterator(companies.iterator()).map(a -> a.getTicker())
+					.collect(Collectors.toSet());
+		}
+		return symbols;
+	}
+
+	@Override
+	public Pair<Boolean,Set<String>> refreshSymbolsIfNeeded() {
+		boolean symbolsReloadNeeded = true;
 		Control lastSymbolLoad = controlProvider.getLatestControlByType(ControlType.SYMBOL_SECTOR_REFRESH);
-		LocalDate lastRefresh = lastSymbolLoad.getTimeStamp().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalDate lastRefresh = null;
+		if (Control.isExist(lastSymbolLoad)) {
+			lastRefresh = lastSymbolLoad.getTimeStamp().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		}
 		LocalDate now = LocalDate.now();
 		if (lastRefresh == null) {
 			log.info("No record of successful symbols refresh");
@@ -306,23 +321,20 @@ public class SymbolsControllerImpl implements SymbolsController {
 				log.info("It's been " + daysSinceLastRefresh + " days since last symbol refresh, we need to refresh");
 				symbolsReloadNeeded = true;
 			} else {
-				log.info("It's been only" + daysSinceLastRefresh
+				log.info("It's been only " + daysSinceLastRefresh
 						+ " days since last symbol refresh, no need for refresh");
 				symbolsReloadNeeded = false;
 			}
 		}
-		Set<String> symbols;
+		Set<String> symbols = null;
 		if (symbolsReloadNeeded) {
 			Pair<Control, Set<String>> symbolsAndControl = refrehSymbols();
 			Control control = symbolsAndControl.getLeft();
 			controlProvider.save(control);
 			symbols = symbolsAndControl.getRight();
-		} else {
-			Iterable<Company> companies = companyRepository.findAll();
-			symbols = StreamUtils.createStreamFromIterator(companies.iterator()).map(a -> a.getTicker())
-					.collect(Collectors.toSet());
 		}
-		return symbols;
+		Pair<Boolean,Set<String>>ret = Pair.of(symbolsReloadNeeded,symbols);
+		return ret;
 	}
 
 	private Pair<Control, Set<String>> refrehSymbols() {
@@ -353,9 +365,9 @@ public class SymbolsControllerImpl implements SymbolsController {
 			sectorRepository.save(unsavedIndustries);
 			Iterable<Sector> allSavedSectorsAndIndustries = sectorRepository.findAll();
 
-			Map<String, Sector> industriesByDescription = StreamUtils
+			Map<String, List<Sector>> industriesByDescription = StreamUtils
 					.createStreamFromIterator(allSavedSectorsAndIndustries.iterator())
-					.collect(Collectors.toMap(Sector::getDescription, Function.identity()));
+					.collect(Collectors.groupingBy(Sector::getDescription));
 
 			Set<Company> companies = sectorsAndCompanies.companies();
 			Iterable<Company> savedCompanies = companyRepository.findAll();
@@ -371,6 +383,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 			c.setType(ControlType.SYMBOL_SECTOR_REFRESH);
 			firms = companies.stream().map(a -> a.getTicker()).collect(Collectors.toSet());
 		} catch (Throwable t) {
+			log.error(t.getMessage(),t);
 			firms = new HashSet<>();
 			c.setComments(t.getMessage());
 			c.setStatus(Status.FAIL);
@@ -442,14 +455,18 @@ public class SymbolsControllerImpl implements SymbolsController {
 
 	private Set<Sector> findUnsavedSectors(Stream<Sector> sectors, Iterable<Sector> allSectorsAndIndustries) {
 		Set<Sector> ret = new HashSet<>();
-		Map<String, Sector> sectorsByDescription = StreamSupport.stream(allSectorsAndIndustries.spliterator(), false)
-				.collect(Collectors.toMap(Sector::getDescription, Function.identity()));
+		Map<String, List<Sector>> sectorsByDescription = StreamSupport.stream(allSectorsAndIndustries.spliterator(), false)
+				.collect(Collectors.groupingBy(Sector::getDescription));
 
 		sectors.forEach(n -> {
 			// check if it exists already
 			if (sectorsByDescription.containsKey(n.getDescription())) {
 				// already exist - check relevant data
-				Sector existing = sectorsByDescription.get(n.getDescription());
+				List<Sector> sectorsForDesc = sectorsByDescription.get(n.getDescription());
+				if(sectorsForDesc.size()>1) {
+					log.warn("Sector desc duplicated "+sectorsForDesc);
+				}	
+				Sector existing = sectorsForDesc.iterator().next();
 				if (!existing.equals(n)) {
 					n.setId(existing.getId());
 					if (!existing.equals(n) &&
@@ -479,9 +496,17 @@ public class SymbolsControllerImpl implements SymbolsController {
 
 	}
 
-	private void setIndustryAndSectorId(Company c, Map<String, Sector> industriesByDescription) {
-		Sector sector = industriesByDescription.get(c.getSectorDescription());
-		Sector industry = industriesByDescription.get(c.getIndustryDescription());
+	private void setIndustryAndSectorId(Company c, Map<String, List<Sector>> industriesByDescription) {
+		List<Sector> sectors = industriesByDescription.get(c.getSectorDescription());
+		List<Sector> industries = industriesByDescription.get(c.getIndustryDescription());
+		if(sectors.size()>1) {
+			log.warn("sectors with same desc: "+sectors);
+		}
+		if(industries.size()>1) {
+			log.warn("industries with same desc: "+industries);
+		}
+		Sector sector = sectors.iterator().next();
+		Sector industry = industries.iterator().next();
 		if (sector != null && sector.getId() != null) {
 			c.setSectorId(sector.getId());
 		}
@@ -492,16 +517,20 @@ public class SymbolsControllerImpl implements SymbolsController {
 
 	private Collection<Sector> wireSectorsAndIndustries(Iterable<Sector> allSectorsAndIndustries,
 			Collection<Sector> newSectors) {
-		Map<String, Sector> sectors = StreamUtils.createStreamFromIterator(allSectorsAndIndustries.iterator())
-				.collect(Collectors.toMap(Sector::getDescription, Function.identity()));
+		Map<String, List<Sector>> sectors = StreamUtils.createStreamFromIterator(allSectorsAndIndustries.iterator())
+				.collect(Collectors.groupingBy(Sector::getDescription));
 
 		newSectors.stream().filter(s -> s.getParentSectorDescription() != null)
 				.forEach(s -> setIndustrySectorId(s, sectors));
 		return newSectors;
 	}
 
-	private void setIndustrySectorId(Sector s, Map<String, Sector> allSectorsAndIndustries) {
-		Sector sector = allSectorsAndIndustries.get(s.getParentSectorDescription());
+	private void setIndustrySectorId(Sector s, Map<String, List<Sector>> allSectorsAndIndustries) {
+		List<Sector> sectors = allSectorsAndIndustries.get(s.getParentSectorDescription());
+		if(sectors.size()>1) {
+			log.warn("Found multiple sectors for desc: "+s.getParentSectorDescription()+" : "+sectors);
+		}
+		Sector sector = sectors.iterator().next();
 		try {
 			if (sector.getId() != null) {
 				s.setParentSectorId(sector.getId());
