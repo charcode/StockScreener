@@ -47,64 +47,57 @@ public class Economic {
     
     private Double perCalculated;
 
-    public Economic(Date priceDate, Double bid, Integer bidSize, Double ask,
-	    Integer askSize, Double change, Double changeFromAvg200,
-	    Double changeFromAvg200InPercent, Double changeFromAvg50,
-	    Double changeFromAvg50InPercent, Double changeFromYearHigh,
-	    Double changeFromYearHighInPercent, Double changeFromYearLow,
-	    Double changeFromYearLowInPercent, Double changeInPercent,
-	    Double dayHigh, Double dayLow, String lastTradeDateStr,
-	    Integer lastTradeSize, String lastTradeTimeStr, Double open,
-	    Double previousClose, Double priceAvg200, Double priceAvg50,
-	    String symbol, TimeZone timeZone, Long volume, Double yearHigh,
-	    Double yearLow, Double eps, Double bookValuePerShare,
-	    Double ebitda, Double epsEstimateCurrentYear,
-	    Double epsEstimateNextQuarter, Double epsEstimateNextYear,
-	    Double marketCap, Double oneYearTargetPrice, Double pe, Double peg,
-	    Double priceBook, Double priceSales, Double revenue, Double roe,
-	    Long sharesFloat, Long sharesOutstanding, Long sharesOwned,
-	    Double annualDividendYield, Double annualDividendYieldPercent,
-	    Calendar dividendExDate, Calendar dividendPayDate) {
-	super();
-	this.priceDate = priceDate;
-	this.bid = bid;
-	this.ask = ask;
-	this.eps = eps;
-	this.dayHigh = dayHigh;
-	this.dayLow = dayLow;
-	this.lastTradeDateStr = lastTradeDateStr;
-	this.lastTradeSize = lastTradeSize;
-	this.lastTradeTimeStr = lastTradeTimeStr;
-	this.open = open;
-	this.previousClose = previousClose;
-	this.priceAvg200 = priceAvg200;
-	this.priceAvg50 = priceAvg50;
-	this.symbol = symbol;
-	this.timeZone = timeZone;
-	this.volume = volume;
-	this.yearHigh = yearHigh;
-	this.yearLow = yearLow;
-	this.bookValuePerShare = bookValuePerShare;
-	this.ebitda = ebitda;
-	this.epsEstimateCurrentYear = epsEstimateCurrentYear;
-	this.epsEstimateNextQuarter = epsEstimateNextQuarter;
-	this.epsEstimateNextYear = epsEstimateNextYear;
-	this.marketCap = marketCap;
-	this.oneYearTargetPrice = oneYearTargetPrice;
-	this.pe = pe;
-	this.peg = peg;
-	this.priceBook = priceBook;
-	this.priceSales = priceSales;
-	this.revenue = revenue;
-	this.roe = roe;
-	this.sharesFloat = sharesFloat;
-	this.sharesOutstanding = sharesOutstanding;
-	this.sharesOwned = sharesOwned;
-	this.annualDividendYield = annualDividendYield;
-	this.annualDividendYieldPercent = annualDividendYieldPercent;
-	this.dividendExDate = dividendExDate;
-	this.dividendPayDate = dividendPayDate;
-    }
+	public Economic(Date priceDate, Double bid, Integer bidSize, Double ask, Integer askSize, Double change,
+			Double changeFromAvg200, Double changeFromAvg200InPercent, Double changeFromAvg50,
+			Double changeFromAvg50InPercent, Double changeFromYearHigh, Double changeFromYearHighInPercent,
+			Double changeFromYearLow, Double changeFromYearLowInPercent, Double changeInPercent, Double dayHigh,
+			Double dayLow, String lastTradeDateStr, Integer lastTradeSize, String lastTradeTimeStr, Double open,
+			Double previousClose, Double priceAvg200, Double priceAvg50, String symbol, TimeZone timeZone, Long volume,
+			Double yearHigh, Double yearLow, Double eps, Double bookValuePerShare, Double ebitda,
+			Double epsEstimateCurrentYear, Double epsEstimateNextQuarter, Double epsEstimateNextYear, Double marketCap,
+			Double oneYearTargetPrice, Double pe, Double peg, Double priceBook, Double priceSales, Double revenue,
+			Double roe, Long sharesFloat, Long sharesOutstanding, Long sharesOwned, Double annualDividendYield,
+			Double annualDividendYieldPercent, Calendar dividendExDate, Calendar dividendPayDate) {
+		super();
+		this.priceDate = priceDate;
+		this.bid = bid;
+		this.ask = ask;
+		this.eps = eps;
+		this.dayHigh = dayHigh;
+		this.dayLow = dayLow;
+		this.lastTradeDateStr = lastTradeDateStr;
+		this.lastTradeSize = lastTradeSize;
+		this.lastTradeTimeStr = lastTradeTimeStr;
+		this.open = open;
+		this.previousClose = previousClose;
+		this.priceAvg200 = priceAvg200;
+		this.priceAvg50 = priceAvg50;
+		this.symbol = symbol;
+		this.timeZone = timeZone;
+		this.volume = volume;
+		this.yearHigh = yearHigh;
+		this.yearLow = yearLow;
+		this.bookValuePerShare = bookValuePerShare;
+		this.ebitda = ebitda;
+		this.epsEstimateCurrentYear = epsEstimateCurrentYear;
+		this.epsEstimateNextQuarter = epsEstimateNextQuarter;
+		this.epsEstimateNextYear = epsEstimateNextYear;
+		this.marketCap = marketCap;
+		this.oneYearTargetPrice = oneYearTargetPrice;
+		this.pe = pe;
+		this.peg = peg;
+		this.priceBook = priceBook;
+		this.priceSales = priceSales;
+		this.revenue = revenue;
+		this.roe = roe;
+		this.sharesFloat = sharesFloat;
+		this.sharesOutstanding = sharesOutstanding;
+		this.sharesOwned = sharesOwned;
+		this.annualDividendYield = annualDividendYield;
+		this.annualDividendYieldPercent = annualDividendYieldPercent;
+		this.dividendExDate = dividendExDate;
+		this.dividendPayDate = dividendPayDate;
+	}
 
 	public Date getPriceDate() {
 		return priceDate;
