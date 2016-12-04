@@ -106,172 +106,169 @@ public class Economic {
 	this.dividendPayDate = dividendPayDate;
     }
 
-    public Date getPriceDate() {
-	return priceDate;
-    }
+	public Date getPriceDate() {
+		return priceDate;
+	}
 
-    public Double getDayHigh() {
-	return dayHigh;
-    }
+	public Double getDayHigh() {
+		return dayHigh;
+	}
 
-    public Double getDayLow() {
-	return dayLow;
-    }
+	public Double getDayLow() {
+		return dayLow;
+	}
 
-    public String getLastTradeDateStr() {
-	return lastTradeDateStr;
-    }
+	public String getLastTradeDateStr() {
+		return lastTradeDateStr;
+	}
 
-    public Integer getLastTradeSize() {
-	return lastTradeSize;
-    }
+	public Integer getLastTradeSize() {
+		return lastTradeSize;
+	}
 
-    public String getLastTradeTimeStr() {
-	return lastTradeTimeStr;
-    }
+	public String getLastTradeTimeStr() {
+		return lastTradeTimeStr;
+	}
 
-    public Double getOpen() {
-	return open;
-    }
+	public Double getOpen() {
+		return open;
+	}
 
-    public Double getPreviousClose() {
-	return previousClose;
-    }
+	public Double getPreviousClose() {
+		return previousClose;
+	}
 
-    public Double getPriceAvg200() {
-	return priceAvg200;
-    }
+	public Double getPriceAvg200() {
+		return priceAvg200;
+	}
 
-    public Double getPriceAvg50() {
-	return priceAvg50;
-    }
+	public Double getPriceAvg50() {
+		return priceAvg50;
+	}
 
-    public String getSymbol() {
-	return symbol;
-    }
+	public String getSymbol() {
+		return symbol;
+	}
 
-    public TimeZone getTimeZone() {
-	return timeZone;
-    }
+	public TimeZone getTimeZone() {
+		return timeZone;
+	}
 
-    public long getVolume() {
-	return volume;
-    }
+	public long getVolume() {
+		return volume;
+	}
 
-    public Double getYearHigh() {
-	return yearHigh;
-    }
+	public Double getYearHigh() {
+		return yearHigh;
+	}
 
-    public Double getYearLow() {
-	return yearLow;
-    }
+	public Double getYearLow() {
+		return yearLow;
+	}
 
-    public Date getDate() {
-	return priceDate;
-    }
+	public Date getDate() {
+		return priceDate;
+	}
 
-    public Double getBid() {
-	return bid;
-    }
+	public Double getBid() {
+		return bid;
+	}
 
-    public Double getAsk() {
-	return ask;
-    }
+	public Double getAsk() {
+		return ask;
+	}
 
-    public Double getEps() {
-	return eps;
-    }
+	public Double getEps() {
+		return eps;
+	}
 
-    public Double getBookValuePerShare() {
-	return bookValuePerShare;
-    }
+	public Double getBookValuePerShare() {
+		return bookValuePerShare;
+	}
 
-    public Double getEbitda() {
-	return ebitda;
-    }
+	public Double getEbitda() {
+		return ebitda;
+	}
 
-    public Double getEpsEstimateCurrentYear() {
-	return epsEstimateCurrentYear;
-    }
+	public Double getEpsEstimateCurrentYear() {
+		return epsEstimateCurrentYear;
+	}
 
-    public Double getEpsEstimateNextQuarter() {
-	return epsEstimateNextQuarter;
-    }
+	public Double getEpsEstimateNextQuarter() {
+		return epsEstimateNextQuarter;
+	}
 
-    public Double getEpsEstimateNextYear() {
-	return epsEstimateNextYear;
-    }
+	public Double getEpsEstimateNextYear() {
+		return epsEstimateNextYear;
+	}
 
-    public Double getMarketCap() {
-	return marketCap;
-    }
+	public Double getMarketCap() {
+		return marketCap;
+	}
 
-    public Double getOneYearTargetPrice() {
-	return oneYearTargetPrice;
-    }
+	public Double getOneYearTargetPrice() {
+		return oneYearTargetPrice;
+	}
 
-    public Double getPe() {
-	return pe;
-    }
+	public Double getPe() {
+		return pe;
+	}
 
-    public Double getPeg() {
-	return peg;
-    }
+	public Double getPeg() {
+		return peg;
+	}
 
-    public Double getPriceBook() {
-	return priceBook;
-    }
+	public Double getPriceBook() {
+		return priceBook;
+	}
 
-    public Double getPriceSales() {
-	return priceSales;
-    }
+	public Double getPriceSales() {
+		return priceSales;
+	}
 
-    public Double getRevenue() {
-	return revenue;
-    }
+	public Double getRevenue() {
+		return revenue;
+	}
 
-    public Double getRoe() {
-	return roe;
-    }
+	public Double getRoe() {
+		return roe;
+	}
 
-    public Long getSharesFloat() {
-	return sharesFloat;
-    }
+	public Long getSharesFloat() {
+		return sharesFloat;
+	}
 
-    public Long getSharesOutstanding() {
-	return sharesOutstanding;
-    }
+	public Long getSharesOutstanding() {
+		return sharesOutstanding;
+	}
 
-    public Long getSharesOwned() {
-	return sharesOwned;
-    }
+	public Long getSharesOwned() {
+		return sharesOwned;
+	}
 
-    public Double getAnnualDividendYield() {
-        return annualDividendYield;
-    }
+	public Double getAnnualDividendYield() {
+		return annualDividendYield;
+	}
 
-    public Double getAnnualDividendYieldPercent() {
-        return annualDividendYieldPercent;
-    }
+	public Double getAnnualDividendYieldPercent() {
+		return annualDividendYieldPercent;
+	}
 
-    public Calendar getDividendExDate() {
-        return dividendExDate;
-    }
+	public Calendar getDividendExDate() {
+		return dividendExDate;
+	}
 
-    public Calendar getDividendPayDate() {
-        return dividendPayDate;
-    }
-    
-    
-    
+	public Calendar getDividendPayDate() {
+		return dividendPayDate;
+	}
 
-    public Double getPerCalculated() {
-        return perCalculated;
-    }
+	public Double getPerCalculated() {
+		return perCalculated;
+	}
 
-    public void setPerCalculated(Double perCalculated) {
-        this.perCalculated = perCalculated;
-    }
+	public void setPerCalculated(Double perCalculated) {
+		this.perCalculated = perCalculated;
+	}
 
     @Override
     public String toString() {
