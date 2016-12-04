@@ -1,14 +1,15 @@
 package com.oak.view.vaadin.main;
 
+import java.util.Set;
+
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.oak.api.MainController;
 import com.oak.api.MainController.TickersData;
 import com.oak.api.finance.model.dto.Control;
-import com.oak.api.finance.model.dto.Screen0Result;
 import com.vaadin.annotations.Theme;
 import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.SpringUI;
-import com.vaadin.spring.annotation.UIScope;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
@@ -20,16 +21,17 @@ import com.vaadin.ui.VerticalLayout;
 @SpringUI
 @Theme("valo")
 public class StockScreenerControlUI extends UI {
+	private static final long serialVersionUID = 1L;
 	
 	private final MainController mainController;
 	private final Grid controlGrid = new Grid();
 	private final Grid screen0Grid = new Grid();
 	private final Button processBtn = new Button("Start Processing");
 	private final Label statusLbl = new Label();
+	private final ScreenResultsAdapter adapter = new ScreenResultsAdapter();
 	
 	public StockScreenerControlUI(MainController mainController) {
 		this.mainController = mainController;
-		
 	}
 
 	@Override
@@ -46,7 +48,7 @@ public class StockScreenerControlUI extends UI {
 		
 		
 		controlGrid.setColumns( "timeStamp", "type", "timeStamp", "status", "comments");
-		screen0Grid.setColumns("runDate", "ticker", "priceBid","targetPrice", "per","eps","marketCap","companyName", "currency",  "bookValuePerShare", "perCalculated");
+		screen0Grid.setColumns("runDate", "ticker", "priceBid","targetPrice", "per","eps","marketCap","peg","companyName", "currency",  "bookValuePerShare", "perCalculated");
 		controlGrid.setWidth("100%");
 		screen0Grid.setWidth("100%");
 		controlGrid.addSelectionListener(e -> {
@@ -56,9 +58,16 @@ public class StockScreenerControlUI extends UI {
 				//
 			}
 		});
-		
+		Set<String>floatColumns = Sets.newHashSet("priceBid","targetPrice", "per","eps","marketCap","peg", "currency",  "bookValuePerShare", "perCalculated");
 		controlGrid.setContainerDataSource(new BeanItemContainer<>(Control.class,mainController.getStatuses()));
-		screen0Grid.setContainerDataSource(new BeanItemContainer<>(Screen0Result.class,mainController.getResults()));
+		screen0Grid.setContainerDataSource(new BeanItemContainer<>(Screen0ResultAdapter.class,adapter.adapt(mainController.getResults())));
+		screen0Grid.setCellStyleGenerator(cellReference ->
+	                floatColumns.contains(cellReference.getPropertyId()) ?
+	                			"v-align-right"
+	                			: // otherwise, align text to left
+	                			"v-align-left"
+	            			);
+		
 		
 		setContent(main);
 		

@@ -120,7 +120,10 @@ public class FinanceFundamentalAnalysisControllerImpl implements FinanceAnalysis
 					bookValueMultiple);
 			isPegAttractive = checkPeg(comments, isPegAttractive, peg);
 
-			isAttractiveRatios = isPeAttractive && isPegAttractive && isEstimateEpsAttractive
+			isAttractiveRatios = isPeAttractive && isPegAttractive 
+					// can be removed because many non-US companies don't have future estimates
+					// but there will be too many results
+					 && isEstimateEpsAttractive  
 					&& isBookToValueAttractive;
 		} else {
 			String msg = "Currency is not interesting: " + stock.getCurrency() + ", " + stock.getName() + ", "
