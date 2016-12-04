@@ -26,8 +26,6 @@ public class Asset {
 	@ElementCollection(fetch=FetchType.EAGER)
 	private Map<Timestamp,BigDecimal>historicalPrices;
 	
-//	@OneToMany
-//	@MapKeyJoinColumn
 	@ElementCollection(fetch = FetchType.LAZY)
 	private Map<Exchange,String>tickerByExchange;
 
