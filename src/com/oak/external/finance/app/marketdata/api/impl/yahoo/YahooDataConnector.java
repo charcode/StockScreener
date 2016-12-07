@@ -45,19 +45,23 @@ public class YahooDataConnector implements DataConnector {
 		Collection<String[]> batches = batchStocks(stocks, 20);
 		for (String[] batch : batches) {
 			int attempt = 0;
-			while(!getEconomicsForBatch(fromDate, ret, batch)) {
-				log.warn("retrying for the time n: " + (attempt + 1 ) + " loading batch: " + StringUtils.join(batch, ", "));
+			IOException e = getEconomicsForBatch(fromDate, ret, batch);
+			while(e != null) {
+				String batchToStr = StringUtils.join(batch, ", ");
 				if(attempt++ >= 5) {
+					log.error("Failed to load after maximum attemps: " + batchToStr,e);
 					break;
 				}
+				e = getEconomicsForBatch(fromDate, ret, batch);
+				log.warn("retrying for the time n: " + (attempt + 1 ) + " loading batch: " + batchToStr);
 			}
 		}
 		return ret;
 	}
 
-	private boolean getEconomicsForBatch(Date fromDate, HashMap<Stock, Map<Date, Economic>> econMap, String[] batch) {
+	private IOException getEconomicsForBatch(Date fromDate, HashMap<Stock, Map<Date, Economic>> econMap, String[] batch) {
 		Calendar from = null;
-		boolean ret = false;
+		IOException ret = null;
 		if (fromDate != null) {
 			from = Calendar.getInstance();
 			from.setTime(fromDate);
@@ -67,10 +71,9 @@ public class YahooDataConnector implements DataConnector {
 			map = connector.get(batch);
 			Map<Stock, Map<Date, Economic>> yahooStockToEconomyPerDate = converter.yahooStockToEconomyPerDate(map);
 			econMap.putAll(yahooStockToEconomyPerDate);
-			ret = true;
 		} catch (IOException e) {
-			log.error("error getting price from Yahoo for " + StringUtils.join(batch,", "), e);
-			ret = false;
+			log.error("error getting price from Yahoo for " + StringUtils.join(batch,", "));
+			ret = e;
 		}
 		return ret;
 	}

@@ -22,4 +22,9 @@ public class FinancialComment {
 		return type;
 	}
 
+	@Override
+	public String toString() {
+		return "FinancialComment [comment=" + comment + ", type=" + type + "]";
+	}
+
 }

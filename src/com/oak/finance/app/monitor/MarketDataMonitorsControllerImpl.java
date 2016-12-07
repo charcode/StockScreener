@@ -33,7 +33,8 @@ public class MarketDataMonitorsControllerImpl implements MarketDataMonitorsContr
 	 * remove them from the list
 	 */
 	private final LinkedBlockingQueue<String> newStocksWithoutPrices;
-	private final LinkedBlockingQueue<Map<Stock, Map<Date, Economic>>> marketDataQueue;
+	private final LinkedBlockingQueue<Map<Stock, Map<Date, Economic>>> marketDataForAnalysisQueue;
+	private final LinkedBlockingQueue<Map<Stock, Map<Date, Economic>>> marketDataForPersistingQueue;
 	private boolean stop = false;
 	private final Logger logger;
 	private final FinanceAnalysisController analysisController;
@@ -41,18 +42,22 @@ public class MarketDataMonitorsControllerImpl implements MarketDataMonitorsContr
 	private final MarketDataProvider marketDataProvider;
 	private final Executor executor;
 	private final StocksCallback callback;
+	private final MarketDataPersistenceController marketDataPersistenceController;
 	private final Map<Stock, Map<Date, Economic>> endMarker;
 
 	public MarketDataMonitorsControllerImpl(SymbolsController symbolsController,
-			FinanceAnalysisController analysisController, MarketDataProvider marketDataProvider, Logger logger) {
+			FinanceAnalysisController analysisController, MarketDataProvider marketDataProvider,
+			MarketDataPersistenceController marketDataPersistenceController, Logger logger) {
 		logger.debug("creating MarketDataMonitorsControllerImpl");
 		this.newStocksWithoutPrices = new LinkedBlockingQueue<String>();
-		this.marketDataQueue = new LinkedBlockingQueue<Map<Stock, Map<Date, Economic>>>();
+		this.marketDataForAnalysisQueue = new LinkedBlockingQueue<Map<Stock, Map<Date, Economic>>>();
+		this.marketDataForPersistingQueue = new LinkedBlockingQueue<Map<Stock, Map<Date, Economic>>>();
 		this.logger = logger;
 		this.executor = Executors.newCachedThreadPool();
 		this.analysisController = analysisController;
 		this.symbolsProvider = symbolsController;
 		this.marketDataProvider = marketDataProvider;
+		this.marketDataPersistenceController = marketDataPersistenceController;
 		this.callback = new StocksCallback();
 		logger.debug("starting the wait loop");
 		endMarker = createEndMarker();
@@ -77,29 +82,64 @@ public class MarketDataMonitorsControllerImpl implements MarketDataMonitorsContr
 		Thread marketDataCollectionThread = new Thread(marketDataCollectionRunnable, "DataCollectionThread");
 		Thread stocksAnalysisThread = new Thread("StocksAnalysisThread") {
 			public void run() {
-				stocksAnalysisThread(interestingSymbols);
+				stockProcessorThread(interestingSymbols, new EconomicAnalyzer());
+			}
+		};
+		Thread economicsPersistenceThread = new Thread("EconomicsPersistenceThread") {
+			@Override
+			public void run() {
+				stockProcessorThread(interestingSymbols, new EconomicPersistence());
 			}
 		};
 		executor.execute(marketDataCollectionThread);
 		executor.execute(stocksAnalysisThread);
+		executor.execute(economicsPersistenceThread);
 	}
 
-	private void stocksAnalysisThread(Set<String> alwaysWatch) {
+	private void stockProcessorThread(Set<String> alwaysWatch, EconomicProcessor processor) {
 		try {
 			while (!stop) {
-				Map<Stock, Map<Date, Economic>> marketData = marketDataQueue.take();
+				Map<Stock, Map<Date, Economic>> marketData = marketDataForAnalysisQueue.take();
 				if (endMarker.equals(marketData)) {
 					stop = true;
-					logger.info("Finished collecting market data, exiting loop.");
+					logger.info(processor.getEndOfProcessingMessage());
 				} else {
-					for (Stock s : marketData.keySet()) {
-						Map<Date, Economic> economics = marketData.get(s);
-						analysisController.onEconomicsUpdate(callback, s, economics, alwaysWatch);
-					}
+					processor.onEconomicData(alwaysWatch, marketData);
 				}
 			}
 		} catch (InterruptedException e) {
 			logger.error("Stock Analysis thread was interrupted", e);
+		}
+	}
+	interface EconomicProcessor{
+		void onEconomicData(Set<String> alwaysWatch, Map<Stock, Map<Date, Economic>> marketData);
+		String getEndOfProcessingMessage();
+	}
+	class EconomicAnalyzer implements EconomicProcessor{
+		@Override
+		public void onEconomicData(Set<String> alwaysWatch, Map<Stock, Map<Date, Economic>> marketData) {
+			analyzeEconomics(alwaysWatch,marketData);
+		}
+		@Override
+		public String getEndOfProcessingMessage() {
+			return "Finished collecting and analyzing market data, exiting loop.";
+		}
+	}
+	class EconomicPersistence implements EconomicProcessor{
+		@Override
+		public void onEconomicData(Set<String> alwaysWatch, Map<Stock, Map<Date, Economic>> marketData) {
+			marketDataPersistenceController.persist(marketData);
+		}
+		@Override
+		public String getEndOfProcessingMessage() {
+			return "Finished saving market data to db, exiting loop.";
+		}
+	}
+
+	private void analyzeEconomics(Set<String> alwaysWatch, Map<Stock, Map<Date, Economic>> marketData) {
+		for (Stock s : marketData.keySet()) {
+			Map<Date, Economic> economics = marketData.get(s);
+			analysisController.onEconomicsUpdate(callback, s, economics, alwaysWatch);
 		}
 	}
 
@@ -107,9 +147,11 @@ public class MarketDataMonitorsControllerImpl implements MarketDataMonitorsContr
 		Collection<Set<String>> batches = batch(symbolList, 10);
 		for (Set<String> batch : batches) {
 			Map<Stock, Map<Date, Economic>> batchResult = marketDataProvider.retrieveMarketData(batch);
-			marketDataQueue.add(batchResult);
+			marketDataForAnalysisQueue.add(batchResult);
+			marketDataForPersistingQueue.add(batchResult);
 		}
-		marketDataQueue.add(endMarker);
+		marketDataForAnalysisQueue.add(endMarker);
+		marketDataForPersistingQueue.add(endMarker);
 	}
 
 	private Map<Stock, Map<Date, Economic>> createEndMarker() {

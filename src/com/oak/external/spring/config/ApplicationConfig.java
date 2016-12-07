@@ -18,6 +18,7 @@ import com.oak.api.finance.repository.CompanyRepository;
 import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
 import com.oak.api.finance.repository.EarningsCalendarRepository;
+import com.oak.api.finance.repository.EconomicRepository;
 import com.oak.api.finance.repository.IncomeStatementRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
@@ -55,6 +56,8 @@ import com.oak.finance.app.main.server.ApplicationServer;
 import com.oak.finance.app.main.server.ApplicationServerImpl;
 import com.oak.finance.app.monitor.MarketDataMonitorsController;
 import com.oak.finance.app.monitor.MarketDataMonitorsControllerImpl;
+import com.oak.finance.app.monitor.MarketDataPersistenceController;
+import com.oak.finance.app.monitor.MarketDataPersistenceControllerImpl;
 import com.oak.finance.app.monitor.analysis.FinanceAnalysisController;
 import com.oak.finance.app.monitor.analysis.FinanceFundamentalAnalysisControllerImpl;
 import com.oak.finance.interest.SymbolsController;
@@ -120,6 +123,8 @@ public class ApplicationConfig {
 	private CashFlowStatementRepository cashFlowStatementRepository;
 	@Autowired
 	private EarningsCalendarRepository earningsCalendarRepository;
+	@Autowired
+	private EconomicRepository economicRepository;
 	
 	@Bean
 	ApplicationServer appServer() {
@@ -219,10 +224,20 @@ public class ApplicationConfig {
 				symbolController(),
 				financeAnalysisController(),
 				marketDataProvider(),
-				LogManager
-						.getFormatterLogger(MarketDataMonitorsControllerImpl.class));
+				marketDataPersistenceController(), 
+				LogManager.getFormatterLogger(MarketDataMonitorsControllerImpl.class));
 		log.debug("creating marketDataMonitorsController...done");
 		return marketDataMonitorsController;
+	}
+	@Bean
+	MarketDataPersistenceController marketDataPersistenceController() {
+		log.debug("creating marketDataPersistenceController...");
+		MarketDataPersistenceController marketDataPersistanceController = 
+				new MarketDataPersistenceControllerImpl(
+						LogManager.getFormatterLogger(MarketDataPersistenceControllerImpl.class), 
+						economicRepository, companyRepository);
+		log.debug("creating marketDataPersistenceController...done");
+		return marketDataPersistanceController;
 	}
 
 	@Bean 

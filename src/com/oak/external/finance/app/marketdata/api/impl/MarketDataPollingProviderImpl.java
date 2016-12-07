@@ -39,8 +39,6 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 	private final int earningsCalendarWindowBackInDays;
 	private final int earningsCalendarWindowForwardInDays;
 	private final ControlProvider controlProvider;
-	private boolean stop;
-	private boolean started;
 	private final Logger log;
 
 	public MarketDataPollingProviderImpl(DataConnector dataConnector, EarningsCalendarDao earningsCalendarDao,
@@ -50,7 +48,6 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 		this.earningsCalendarWindowBackInDays = earningsCalendarWindowBackInDays;
 		this.earningsCalendarWindowForwardInDays = earningsCalendarWindowForwardInDays;
 		this.dataConnector = dataConnector;
-		this.stop = false;
 		this.balanceSheetRepository = balanceSheetRepository;
 		this.earningsCalendarRepository = earningsCalendarRepository;
 		this.earningsCalendarDao = earningsCalendarDao;
@@ -95,6 +92,7 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 		}else {
 			log.info("Calendars already loaded today.. skipping, last load: "+latestEarningCalendar);
 		}
+		log.info("Calendars refresh initialized");
 	}
 
 	private void refreshFinancialStatementsForCompanyIfNecessary(Map<String, List<BalanceSheetDto>> bsSavedPerTicker,

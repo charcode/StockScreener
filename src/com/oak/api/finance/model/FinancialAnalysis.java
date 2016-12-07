@@ -108,4 +108,11 @@ public class FinancialAnalysis {
 		return finalSortedMap(assetToDebtRatiosAnnual);
 	}
 
+	@Override
+	public String toString() {
+		return "FinancialAnalysis [stock=" + stock.getSymbol() + ", acceptance=" + acceptance
+				+ ", currentRatiosAnnual=" + currentRatiosAnnual + ", quickRatiosAnnual=" + quickRatiosAnnual
+				+ ", assetToDebtRatiosAnnual=" + assetToDebtRatiosAnnual + "]";
+	}
+	
 }
