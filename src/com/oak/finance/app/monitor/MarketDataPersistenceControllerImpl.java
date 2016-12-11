@@ -35,8 +35,13 @@ public class MarketDataPersistenceControllerImpl implements MarketDataPersistenc
 			.collect(Collectors.toSet());
 		
 		// we don't want to save the economy data that's already there.. 
-		Set<EconomicDto> economyToSave = economics.stream()
+		Set<EconomicDto> economiesToSave = economics.stream()
 				.filter(e -> economicRepository.findByPriceDateAndTicker(e.getPriceDate(), e.getTicker()).isEmpty())
+				.filter(e -> {
+					Date date = new Date(e.getPriceDate().getTime() + 24 * 60 * 60 * 1000);
+					boolean fishyDate = e.getPriceDate().after(date);
+					return !fishyDate;
+				})
 				.collect(Collectors.toSet());
 		Set<EconomicDto> economyExisting = economics.stream()
 				.filter(e -> !economicRepository.findByPriceDateAndTicker(e.getPriceDate(), e.getTicker()).isEmpty())
@@ -45,19 +50,21 @@ public class MarketDataPersistenceControllerImpl implements MarketDataPersistenc
 		if(!economyExisting.isEmpty()) {
 			logger.debug("Skipping already saved economics "+economyExisting.size());
 		}
-		if(!economyToSave.isEmpty()) {
-			logger.debug("Saving economics: "+economyToSave.size());
-			Set<String> tickers = economyToSave.stream().map(c -> c.getTicker()).collect(Collectors.toSet());
+		if(!economiesToSave.isEmpty()) {
+			Set<Long> economies = new HashSet<Long>();
+			logger.debug("Saving economics: "+economiesToSave.size());
+			Set<String> tickers = economiesToSave.stream().map(c -> c.getTicker()).collect(Collectors.toSet());
 			Set<Company> companies = companyRepository.findByTickerIn(tickers);
 			Map<String,Long>idsByTicker = companies.stream().collect(Collectors.toMap(Company::getTicker, Company::getId));
-			for (EconomicDto e : economyToSave) {
+			for (EconomicDto e : economiesToSave) {
 				Long id = idsByTicker.get(e.getTicker());
 				e.setCompanyId(id);
+				economies.add(id);
 			}
 			try {
-				economicRepository.save(economyToSave);
+				economicRepository.save(economiesToSave);
 			}catch(Throwable t) {
-				logger.error("error occured saving economy, "+t.getMessage(),t);
+				logger.error("error occured saving economies, "+economies+" : "+t.getMessage(),t);
 			}
 		}
 	}
