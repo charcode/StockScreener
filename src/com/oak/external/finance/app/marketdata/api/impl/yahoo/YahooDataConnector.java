@@ -49,7 +49,7 @@ public class YahooDataConnector implements DataConnector {
 			while(e != null) {
 				String batchToStr = StringUtils.join(batch, ", ");
 				if(attempt++ >= 5) {
-					log.error("Failed to load after maximum attemps: " + batchToStr,e);
+					log.error("Giving up after failed to load maximum attemps: " + batchToStr,e);
 					break;
 				}
 				e = getEconomicsForBatch(fromDate, ret, batch);

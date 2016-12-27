@@ -51,15 +51,10 @@ public class MarketDataPersistenceControllerImpl implements MarketDataPersistenc
 			logger.debug("Skipping already saved economics "+economyExisting.size());
 		}
 		if(!economiesToSave.isEmpty()) {
-			Set<Long> economies = new HashSet<Long>();
+			Set<String> economies = new HashSet<String>();
 			logger.debug("Saving economics: "+economiesToSave.size());
-			Set<String> tickers = economiesToSave.stream().map(c -> c.getTicker()).collect(Collectors.toSet());
-			Set<Company> companies = companyRepository.findByTickerIn(tickers);
-			Map<String,Long>idsByTicker = companies.stream().collect(Collectors.toMap(Company::getTicker, Company::getId));
 			for (EconomicDto e : economiesToSave) {
-				Long id = idsByTicker.get(e.getTicker());
-				e.setCompanyId(id);
-				economies.add(id);
+				economies.add(e.getTicker());
 			}
 			try {
 				economicRepository.save(economiesToSave);

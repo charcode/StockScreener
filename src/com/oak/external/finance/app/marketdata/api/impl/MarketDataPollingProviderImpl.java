@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -60,7 +62,24 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 			public void run() {
 				initEarningsCalendarRefresh();
 			}
-		}.start();
+		}.start();;
+
+		Timer timer = new Timer();
+		TimerTask task = new TimerTask() {
+			@Override
+			public void run() {
+				initEarningsCalendarRefresh();				
+			}
+		};
+
+		int timeout; 
+		int hrs24InMs = 24*3600*1000;
+		int min10inMs = 10*60*1000;
+//		timeout = hrs24InMs;
+		timeout = min10inMs;
+		
+		timer.schedule(task, timeout, timeout);
+		
 	}
 
 	private void initEarningsCalendarRefresh() {
