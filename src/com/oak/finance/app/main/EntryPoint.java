@@ -12,12 +12,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import com.oak.external.spring.config.ApplicationConfig;
-import com.oak.finance.app.main.controllers.ApplicationController;
 import com.oak.finance.app.main.server.ApplicationServer;
 
 @Configuration
 @EnableAutoConfiguration
-@EntityScan(basePackages = {"com.oak.api.finance.model.dto"}
+@EntityScan(basePackages = {"com.oak.api.finance.model.dto", "com.oak.finance.app.screeners"}
 //				, basePackageClasses = { YahooFinancialJsonDataModel.class }
 			)
 @ComponentScan (basePackageClasses = ApplicationConfig.class)

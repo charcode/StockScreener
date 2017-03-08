@@ -164,11 +164,11 @@ public class YahooWebDataSectorCompaniesDao implements SectorsCompaniesYahooWebD
 				}					
 			}
 		} catch (MalformedURLException e) {
-			log.error("Unexpected IO error while getting list of companies and sectors ", e);
+			log.error("Unexpected IO error MalformedURLException while getting list of companies and sectors "+url, e);
 		} catch (IOException e1) {
-			log.error("Unexpected IO error while getting list of companies and sectors ", e1);
+			log.error("Unexpected IO error IOException while getting list of companies and sectors "+url, e1);
 		} catch (Throwable t) {
-			log.error("Unexpected error while getting list of companies and sectors ", t);
+			log.error("Unexpected error while getting list of companies and sectors "+url, t);
 		}
 		return urls;
 	}
@@ -202,8 +202,12 @@ public class YahooWebDataSectorCompaniesDao implements SectorsCompaniesYahooWebD
 			doNotParse = true;
 		}
 		if(!doNotParse) {
-			ret = Double.parseDouble(t);
-			ret *= multiplier;
+			try {
+				ret = Double.parseDouble(t);
+				ret *= multiplier;
+			} catch (Exception e) {
+				log.error("cannot parseDouble " + t, e);
+			}
 		}
 		return ret;
 	}

@@ -3,6 +3,7 @@ package com.oak.api;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.oak.api.finance.model.dto.Control;
@@ -21,6 +22,7 @@ public interface MainController {
 	List<Control>getStatuses();
 	List<Screen0Result>getResults();
 	void fixDuplicatedCashflows(DuplicatCashflowListener listener);
+	Optional<String[]> getActiveProfiles();
 	
 	@Data
 	public class TickersData{

@@ -2,11 +2,12 @@ package com.oak.api;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.core.env.Environment;
 import org.springframework.data.util.StreamUtils;
 
-import com.oak.api.MainController.DuplicatCashflowListener;
 import com.oak.api.finance.model.dto.Control;
 import com.oak.api.finance.model.dto.Screen0Result;
 import com.oak.api.finance.model.dto.Status;
@@ -18,12 +19,14 @@ public class MainControllerImpl implements MainController {
 	private final Screen0ResultsRepository resRepo;
 	private final ApplicationController appController;
 	private final ControlRepository ctrlRepo;
+	private final Environment env;
 	
 	public MainControllerImpl(ApplicationController appController, 
-			Screen0ResultsRepository resRepo,ControlRepository ctrlRepo){
+			Screen0ResultsRepository resRepo,ControlRepository ctrlRepo, Environment env){
 		this.appController = appController;
 		this.resRepo = resRepo;
 		this.ctrlRepo = ctrlRepo;
+		this.env = env;
 	}
 
 	@Override
@@ -65,5 +68,10 @@ public class MainControllerImpl implements MainController {
 	@Override
 	public void fixDuplicatedCashflows(DuplicatCashflowListener listener) {
 		appController.fixDuplicatedCashflows(listener);
+	}
+	
+	@Override
+	public Optional<String[]> getActiveProfiles() {
+		return Optional.ofNullable(env==null?null:env.getActiveProfiles());
 	}
 }

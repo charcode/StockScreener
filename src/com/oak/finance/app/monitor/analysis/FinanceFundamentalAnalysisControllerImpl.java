@@ -116,8 +116,7 @@ public class FinanceFundamentalAnalysisControllerImpl implements FinanceAnalysis
 
 			isEstimateEpsAttractive = checkEps(comments, isEstimateEpsAttractive, epsPercentCurrentYear,
 					epsPercentNextQuarter, epsPercentNextYear);
-			isBookToValueAttractive = checkPe(comments, isBookToValueAttractive, pe, per, bookValuePerShare,
-					bookValueMultiple);
+			isBookToValueAttractive = checkBookToValue(comments, pe, per, bookValuePerShare, bookValueMultiple);
 			isPegAttractive = checkPeg(comments, isPegAttractive, peg);
 
 			isAttractiveRatios = isPeAttractive && isPegAttractive 
@@ -305,8 +304,9 @@ public class FinanceFundamentalAnalysisControllerImpl implements FinanceAnalysis
 		return isPegAttractive;
 	}
 
-	private boolean checkPe(List<FinancialComment> comments, boolean isBookToValueAttractive, Double pe, Double per,
-			Double bookValuePerShare, double bookValueMultiple) {
+	private boolean checkBookToValue(List<FinancialComment> comments, Double pe, Double per, Double bookValuePerShare,
+			double bookValueMultiple) {
+		boolean isBookToValueAttractive = false;
 		if (pe > 0 && bookValueMultiple > 0 && bookValueMultiple * pe < 25) {
 			String msg = "book value/share= " + bookValuePerShare + ", gives a multiple of = " + bookValueMultiple
 					+ ", pe*bv=" + bookValueMultiple * pe;

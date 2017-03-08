@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.env.Environment;
 
 import com.oak.api.MainController;
 import com.oak.api.MainControllerImpl;
@@ -19,6 +20,7 @@ import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
 import com.oak.api.finance.repository.EarningsCalendarRepository;
 import com.oak.api.finance.repository.EconomicRepository;
+import com.oak.api.finance.repository.ExcludedCompanyRepository;
 import com.oak.api.finance.repository.IncomeStatementRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
@@ -110,6 +112,8 @@ public class ApplicationConfig {
 	@Autowired
 	private CompanyRepository companyRepository;
 	@Autowired
+	private ExcludedCompanyRepository excludedCompanyRepository;
+	@Autowired
 	private CompanyWithProblemsRepository companyWithProblemsRepository;
 	@Autowired
 	private SectorRepository sectorRepository;
@@ -125,6 +129,9 @@ public class ApplicationConfig {
 	private EarningsCalendarRepository earningsCalendarRepository;
 	@Autowired
 	private EconomicRepository economicRepository;
+	
+	@Autowired
+	private Environment environment;
 	
 	@Bean
 	ApplicationServer appServer() {
@@ -157,9 +164,9 @@ public class ApplicationConfig {
 		log.debug("creating stockListProvider...");
 		SymbolsController symbolController = new SymbolsControllerImpl(
 				symbolsDao(), sectorsCompaniesDao(), 
-				controlProvider(), companyRepository, 
-				companyWithProblemsRepository, sectorRepository, 
-				screeningResultsRepository, yahooConnector(), LogManager.getFormatterLogger(SymbolsControllerImpl.class));
+				controlProvider(), excludedCompanyRepository, 
+				companyRepository, companyWithProblemsRepository, 
+				sectorRepository, screeningResultsRepository, yahooConnector(), LogManager.getFormatterLogger(SymbolsControllerImpl.class));
 		log.debug("creating stockListProvider...done");
 		return symbolController;
 	}
@@ -337,7 +344,7 @@ public class ApplicationConfig {
 	MainController mainController() {
 		log.debug("creating mainController....");
 		MainControllerImpl controller = new MainControllerImpl(appController(),screeningResultsRepository,
-				controlRepository);
+				controlRepository, environment);
 		log.debug("creating mainController...Done!");
 		return controller;
 	}

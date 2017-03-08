@@ -1,5 +1,7 @@
 package com.oak.finance.app.main.controllers;
 
+import static java.util.stream.Collectors.toSet;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -47,7 +49,6 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 	private final DuplicateCashflowsDao duplicateCashflowDao;
 	private final FinancialStatementsProvider financialStatementsProvider;
 
-	private final ConcurrentSkipListSet<String> tickers;
 
 	public ApplicationMainControllerImpl(SymbolsController symbolController,
 			MarketDataMonitorsController marketDataMonitorsController,
@@ -66,7 +67,6 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 		this.companyRepository = companyRepository;
 		this.duplicateCashflowDao = duplicateCashflowDao;
 		this.financialStatementsProvider = financialStatementsProvider;
-		tickers = new ConcurrentSkipListSet<>();
 		this.log = log;
 		log.info("ApplicationServerImpl starting ....");
 	}
@@ -75,38 +75,44 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 	public void launchAnalysis() {
 		log.info(ApplicationMainControllerImpl.class.getCanonicalName() + " starting up analysis");
 
-		tickers.addAll(symbolsController.getSymbols());
-		startDifferentReconciliations();
+		Set<String> tickers = symbolsController.getSymbols();
+		startDifferentReconciliations(tickers);
 
 		Set<String> interestingSymbols = symbolsController.getInterestingSymbols();
 		log.debug("found " + tickers.size() + " symbol.");
-		Set<String> excludedSymbols = symbolsController.getExcludedSymbols();
-		log.debug(excludedSymbols.size() + " symbols are excluded.");
-		tickers.removeAll(excludedSymbols);
-		log.debug("getting prices for " + tickers.size() + " symbol" + (tickers.size() > 0 ? "s" : ""));
+		tickers = excludeTickers(tickers);
 		marketDataMonitorsController.startStocksAnalysis(tickers, interestingSymbols);
 	}
 
-	private void startDifferentReconciliations() {
+	private Set<String> excludeTickers(Set<String> tickers) {
+		Set<String> excludedSymbols = symbolsController.getExcludedSymbols();
+		log.debug(excludedSymbols.size() + " symbols are excluded.");
+		tickers.removeAll(excludedSymbols);
+		Set<String> collect = tickers.stream().filter(t -> !excludedSymbols.contains(t)).collect(toSet());
+		log.debug("getting prices for " + tickers.size() + " symbol" + (tickers.size() > 0 ? "s" : ""));
+		return collect;
+	}
+
+	private void startDifferentReconciliations(Set<String> tickers) {
 
 		Thread t0 = new Thread() {
 			public void run() {
-				reconcileTickersFromEarningsCalendar();
+				reconcileTickersFromEarningsCalendar(tickers);
 			}
 		};
 		Thread t1 = new Thread() {
 			public void run() {
-				reconcileTickersInFinancialStatements();
+				reconcileTickersInFinancialStatements(tickers);
 			}
 		};
 		Thread t2 = new Thread() {
 			public void run() {
-				reconcileTickersInLosersTables();
+				reconcileTickersInLosersTables(tickers);
 			}
 		};
 		Thread t3 = new Thread() {
 			public void run() {
-				reconcileTickersInWinnersTables();
+				reconcileTickersInWinnersTables(tickers);
 			}
 		};
 
@@ -189,27 +195,27 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 		.collect(Collectors.toSet());
 	}
 
-	private void reconcileTickersInWinnersTables() {
+	private void reconcileTickersInWinnersTables(Set<String> tickers) {
+		// TODO Auto-generated method stub
+
+	}	
+
+	private void reconcileTickersInLosersTables(Set<String> tickers) {
 		// TODO Auto-generated method stub
 
 	}
 
-	private void reconcileTickersInLosersTables() {
-		// TODO Auto-generated method stub
-
+	private void reconcileTickersInFinancialStatements(Set<String> tickers) {
+		checkAndSave(this.bsRep,tickers);
+		checkAndSave(this.cfRep,tickers);
+		checkAndSave(this.incomeStatementRepository,tickers);
 	}
 
-	private void reconcileTickersInFinancialStatements() {
-		checkAndSave(this.bsRep);
-		checkAndSave(this.cfRep);
-		checkAndSave(this.incomeStatementRepository);
+	private void reconcileTickersFromEarningsCalendar(Set<String> tickers) {
+		checkAndSave(this.earningsCalendarRepository,tickers);
 	}
 
-	private void reconcileTickersFromEarningsCalendar() {
-		checkAndSave(this.earningsCalendarRepository);
-	}
-
-	synchronized private void checkAndSave(ReconcilingRepository rep) {
+	synchronized private void checkAndSave(ReconcilingRepository rep,Set<String> tickers) {
 		if (!tickers.isEmpty()) {
 			Set<String> tickersNotSaved = rep.findDistinctTickerNotIn(tickers);
 			tickers.addAll(tickersNotSaved);

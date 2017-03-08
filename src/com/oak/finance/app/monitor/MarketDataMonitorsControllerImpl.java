@@ -82,24 +82,30 @@ public class MarketDataMonitorsControllerImpl implements MarketDataMonitorsContr
 		Thread marketDataCollectionThread = new Thread(marketDataCollectionRunnable, "DataCollectionThread");
 		Thread stocksAnalysisThread = new Thread("StocksAnalysisThread") {
 			public void run() {
-				stockProcessorThread(interestingSymbols, new EconomicAnalyzer());
+				stockProcessorThread(interestingSymbols, new EconomicAnalyzer(),marketDataForAnalysisQueue);
 			}
 		};
 		Thread economicsPersistenceThread = new Thread("EconomicsPersistenceThread") {
 			@Override
 			public void run() {
-				stockProcessorThread(interestingSymbols, new EconomicPersistence());
+				stockProcessorThread(interestingSymbols, new EconomicPersistence(),marketDataForPersistingQueue);
 			}
 		};
 		executor.execute(marketDataCollectionThread);
 		executor.execute(stocksAnalysisThread);
 		executor.execute(economicsPersistenceThread);
+		try {
+			economicsPersistenceThread.join();
+		} catch (InterruptedException e) {
+			logger.error("Interrupted "+e.getMessage(),e);
+		}
 	}
 
-	private void stockProcessorThread(Set<String> alwaysWatch, EconomicProcessor processor) {
+	private void stockProcessorThread(Set<String> alwaysWatch, EconomicProcessor processor, LinkedBlockingQueue<Map<Stock, Map<Date, Economic>>> marketDataQueue) {
 		try {
+			boolean stop = false;
 			while (!stop) {
-				Map<Stock, Map<Date, Economic>> marketData = marketDataForAnalysisQueue.take();
+				Map<Stock, Map<Date, Economic>> marketData = marketDataQueue.take();
 				if (endMarker.equals(marketData)) {
 					stop = true;
 					logger.info(processor.getEndOfProcessingMessage());

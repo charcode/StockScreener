@@ -1,5 +1,7 @@
 package com.oak.finance.interest;
 
+import static java.util.stream.Collectors.toSet;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -40,6 +42,7 @@ import com.oak.api.finance.model.dto.Sector;
 import com.oak.api.finance.model.dto.Status;
 import com.oak.api.finance.repository.CompanyRepository;
 import com.oak.api.finance.repository.CompanyWithProblemsRepository;
+import com.oak.api.finance.repository.ExcludedCompanyRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
 import com.oak.api.providers.control.ControlProvider;
@@ -64,15 +67,17 @@ public class SymbolsControllerImpl implements SymbolsController {
 	private final Screen0ResultsRepository screeningResultsRepository;
 	private final DataConnector dataConnector;
 	private final CompanyRepository newCompRep;
+	private final ExcludedCompanyRepository excludedCompanyRepository;
 
 	public SymbolsControllerImpl(SymbolsDao symbolsDao, SectorsCompaniesYahooWebDao sectorCompaniesDao,
-			ControlProvider controlProvider, CompanyRepository companyRepository,
-			CompanyWithProblemsRepository companyWithErrorsRepository, SectorRepository sectorRepository,
-			Screen0ResultsRepository screeningResultsRepository, DataConnector dataConnector, Logger log) {
+			ControlProvider controlProvider, ExcludedCompanyRepository excludedCompanyRepository,
+			CompanyRepository companyRepository, CompanyWithProblemsRepository companyWithErrorsRepository,
+			SectorRepository sectorRepository, Screen0ResultsRepository screeningResultsRepository, DataConnector dataConnector, Logger log) {
 		this.symbolsTextFileDao = symbolsDao;
 		this.sectorCompaniesDao = sectorCompaniesDao;
 		this.controlProvider = controlProvider;
 		this.companyRepository = companyRepository;
+		this.excludedCompanyRepository = excludedCompanyRepository;
 		this.companyWithErrorsRepository = companyWithErrorsRepository;
 		this.sectorRepository = sectorRepository;
 		this.screeningResultsRepository = screeningResultsRepository;
@@ -544,8 +549,12 @@ public class SymbolsControllerImpl implements SymbolsController {
 
 	@Override
 	public Set<String> getExcludedSymbols() {
-		Set<String> savedStocksWithoutPrices = symbolsTextFileDao.getSavedSymbolsWithoutPrices();
-		return savedStocksWithoutPrices;
+		Set<String> excludedCompanies = StreamUtils.createStreamFromIterator(
+				excludedCompanyRepository.findAll().iterator())
+		.map(e ->e.getTicker())
+		.collect(toSet());
+//		Set<String> savedStocksWithoutPrices = symbolsTextFileDao.getSavedSymbolsWithoutPrices();
+		return excludedCompanies;
 	}
 
 	@Override
