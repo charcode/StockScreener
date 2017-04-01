@@ -1,5 +1,10 @@
 package com.oak.external.spring.config;
 
+import java.util.List;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Executors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +18,7 @@ import com.oak.api.MainController;
 import com.oak.api.MainControllerImpl;
 import com.oak.api.finance.dao.DuplicateCashflowDaoImpl;
 import com.oak.api.finance.dao.DuplicateCashflowsDao;
+import com.oak.api.finance.model.dto.EarningsCalendar;
 import com.oak.api.finance.repository.BalanceSheetRepository;
 import com.oak.api.finance.repository.CashFlowStatementRepository;
 import com.oak.api.finance.repository.CompanyRepository;
@@ -69,17 +75,12 @@ import com.oak.view.vaadin.main.StockScreenerControlUI;
 @Configuration
 public class ApplicationConfig {
 
-	@Value("sector.datasource")
+	@Value("${yahoo.legacy.sector.datasource}")
 	private String sectorsUrl;
 	
-	/**
-	 * When market data provider is instantiated, it will try to check the corporate earning calendar
-	 * it does this using a sliding window back, and loads all the financial statements that were issued the 
-	 * last few days. 
-	 * This controls how many days to look back
-	 */
-	private int earningsCalendarWindowBackInDays = 15;
-	private int earningsCalendarWindowForwardInDays = 90;
+	@Value("${yahoo.earnings.calendar}")
+	private String earningsUrl;
+	
 	private long historyBackInMilliSeconds = 7 * 24 * 60 * 60 * 1000;
 	// private String stocksFilename = "/stocks/yahoo.csv";
 	private static String ROOT_PATH = "C:\\Users\\charb\\Dropbox\\invest\\";
@@ -189,7 +190,7 @@ public class ApplicationConfig {
 		SymbolsFileDao symbolsFileDao = new SymbolsFileDao(stocksFilename,
 				stocksWithNoPriceFileName, stocksToWatch,
 				interestingCompaniesSymbolsFileName, streamProvider(),
-				LogManager.getFormatterLogger(SymbolsFileDao.class));
+				webParsingUtils(), LogManager.getFormatterLogger(SymbolsFileDao.class));
 		log.debug("creating symbolsDao...done");
 		return symbolsFileDao;
 	}
@@ -200,7 +201,7 @@ public class ApplicationConfig {
 		MarketDataProvider marketDataPollingProvider = new MarketDataPollingProviderImpl(yahooConnector(),
 				earningsCalendarDao(), earningsCalendarRepository, balanceSheetRepository,
 				financialStatementsProvider(), controlProvider(),
-				earningsCalendarWindowBackInDays, earningsCalendarWindowForwardInDays, LogManager.getFormatterLogger(MarketDataPollingProviderImpl.class));
+				LogManager.getFormatterLogger(MarketDataPollingProviderImpl.class));
 		log.debug("creating marketDataProvider...done");
 		return marketDataPollingProvider;
 	}
@@ -326,9 +327,10 @@ public class ApplicationConfig {
 	EarningsCalendarDao earningsCalendarDao() {
 		log.debug("creating earningsCalendarDao...");
 		Logger logger = LogManager.getFormatterLogger(EarningsCalendarYahooWebDao.class);
-		String url = "https://biz.yahoo.com/research/earncal/";
+		
 		log.debug("creating earningsCalendarDao...Done");
-		EarningsCalendarDao ret = new EarningsCalendarYahooWebDao(logger, url, webParsingUtils());
+		CompletionService<List<EarningsCalendar>> executor = new ExecutorCompletionService<>( Executors.newCachedThreadPool());
+		EarningsCalendarDao ret = new EarningsCalendarYahooWebDao(logger, earningsUrl, webParsingUtils(), executor);
 		return ret;
 	}
 	

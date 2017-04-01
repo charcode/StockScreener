@@ -7,6 +7,6 @@ import com.oak.api.finance.model.dto.EarningsCalendar;
 
 public interface EarningsCalendarDao {
 
-	List<EarningsCalendar> getEarningsCalendarByDate(Date date);
+	List<EarningsCalendar> getEarningsCalendarByDate(Date lastLoadedEarningsCalendarDate);
 
 }

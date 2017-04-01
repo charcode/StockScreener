@@ -38,17 +38,13 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 	private final EarningsCalendarRepository earningsCalendarRepository;
 	private final FinancialStatementsProvider financialsProvider;
 	private final BalanceSheetRepository balanceSheetRepository;
-	private final int earningsCalendarWindowBackInDays;
-	private final int earningsCalendarWindowForwardInDays;
 	private final ControlProvider controlProvider;
 	private final Logger log;
 
 	public MarketDataPollingProviderImpl(DataConnector dataConnector, EarningsCalendarDao earningsCalendarDao,
 			EarningsCalendarRepository earningsCalendarRepository, BalanceSheetRepository balanceSheetRepository,
 			FinancialStatementsProvider financialsProvider, ControlProvider controlProvider,
-			int earningsCalendarWindowBackInDays, int earningsCalendarWindowForwardInDays, Logger log) {
-		this.earningsCalendarWindowBackInDays = earningsCalendarWindowBackInDays;
-		this.earningsCalendarWindowForwardInDays = earningsCalendarWindowForwardInDays;
+			Logger log) {
 		this.dataConnector = dataConnector;
 		this.balanceSheetRepository = balanceSheetRepository;
 		this.earningsCalendarRepository = earningsCalendarRepository;
@@ -95,7 +91,7 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 			log.info("Starting earnings calendar and financial statement collection thread");
 
 			Iterable<EarningsCalendar> savedCals = earningsCalendarRepository.findAll();
-			List<EarningsCalendar> newCals = downloadCalendarsForTheLastDays(savedCals);
+			List<EarningsCalendar> newCals = downloadCalendarsForTheLastDays(savedCals, lastEarningsUpdate);
 			List<String> calendarsTickers = newCals.stream().map(n -> n.getTicker()).collect(Collectors.toList());
 			List<BalanceSheetDto> savedBalanceSheets = balanceSheetRepository.findByTickerIn(calendarsTickers);
 			Map<String, List<BalanceSheetDto>> bsSavedPerTicker = savedBalanceSheets.stream()
@@ -135,7 +131,7 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 				if (savedDate != null) {
 					days = TimeUnit.DAYS.convert(webDate.getTime() - savedDate.getTime(), TimeUnit.MILLISECONDS);
 				}
-				if (days == null || days < earningsCalendarWindowBackInDays) {
+				if (days == null || days < 60) {
 					loadFinancialStatments(newEc);
 				} else {
 					log.info("no need to load financial statements for date");
@@ -148,39 +144,26 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 
 	private void loadFinancialStatments(EarningsCalendar newEc) {
 		String ticker = newEc.getTicker();
-		log.info("loading new financial statements for date " + ticker);
+		log.info("loading new financial statements for ticker" + ticker);
 		financialsProvider.getFinancialStatements(ticker);
 		newEc.setStatmentsLoaded(true);// mark calendar as loaded
 	}
 
-	private List<EarningsCalendar> downloadCalendarsForTheLastDays(Iterable<EarningsCalendar> savedCals) {
-		Date date = new Date();
-		Calendar c = Calendar.getInstance();
-		c.setTime(date);
+	private List<EarningsCalendar> downloadCalendarsForTheLastDays(Iterable<EarningsCalendar> savedCals, Calendar lastEarningsUpdate) {
 		List<EarningsCalendar> newCals = new LinkedList<>();
 		Map<String, List<EarningsCalendar>> savedErnCalMap = StreamUtils.createStreamFromIterator(savedCals.iterator())
 				.collect(Collectors.groupingBy(EarningsCalendar::getTicker));
-		for (int i = -1; i > -earningsCalendarWindowBackInDays; i--) {
-			boolean stop = getEarningCalendarForDate(date, c, newCals, savedErnCalMap, i);
-			if(stop) {
-				break;
-			}
-		}
-		for (int i = 0; i < earningsCalendarWindowForwardInDays ; i++) {
-			getEarningCalendarForDate(date, c, newCals, savedErnCalMap, i);
-		}
+		getEarningCalendarForDate(lastEarningsUpdate, newCals, savedErnCalMap);
 		return newCals;
 	}
 
-	private boolean getEarningCalendarForDate(Date date, Calendar c, List<EarningsCalendar> newCals,
-			Map<String, List<EarningsCalendar>> savedErnCalMap, int dateOffset) {
+	private boolean getEarningCalendarForDate(Calendar lastEarningsUpdate, List<EarningsCalendar> newCals, Map<String, List<EarningsCalendar>> savedErnCalMap) {
 		boolean stop = false;
-		c.add(Calendar.DATE, dateOffset);
-		Date d = c.getTime();
-		log.info("Loading earnings calendars for " + d);
+		Date lastLoadedEarningsCalendarDate = lastEarningsUpdate.getTime();
+		log.info("Loading earnings calendars since " + lastLoadedEarningsCalendarDate);
 		boolean noNeedToLookFurtherBack = false;
 		try {
-			List<EarningsCalendar> newErngs = earningsCalendarDao.getEarningsCalendarByDate(d);
+			List<EarningsCalendar> newErngs = earningsCalendarDao.getEarningsCalendarByDate(lastLoadedEarningsCalendarDate);
 			for (EarningsCalendar n : newErngs) {
 				List<EarningsCalendar> savedEarningsForTicker = savedErnCalMap.get(n.getTicker());
 				List<EarningsCalendar> foundEarnings = null;
@@ -195,7 +178,6 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 				} else {
 					noNeedToLookFurtherBack = true;
 				}
-				c.setTime(date);
 			}
 		} catch (RuntimeException e) {
 			log.warn("going too far back.. yahoo data unavailable");

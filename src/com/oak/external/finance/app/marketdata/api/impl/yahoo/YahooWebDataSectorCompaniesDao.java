@@ -27,9 +27,9 @@ public class YahooWebDataSectorCompaniesDao implements SectorsCompaniesYahooWebD
 	private static final String SECTOR = "Sector";
 	private static final String DESCRIPTION = "Description";
 	private static final String MORE_INFO = "More Info";
-	private Logger log;
-	private String url = "https://biz.yahoo.com/p/s_conameu.html";
-	private WebParsingUtils webParsingUtils;
+	private final Logger log;
+	private final String url; //= "https://biz.yahoo.com/p/s_conameu.html";
+	private final WebParsingUtils webParsingUtils;
 
 	private List<String> headersExpected = Arrays.asList( SECTOR, "1 Day Price Change %", "Market Cap", "P/E", "ROE %", "Div. Yield %",
 			"Long-Term Debt to Equity", "Price to Book Value", "Net Profit Margin % (mrq)",
@@ -37,7 +37,7 @@ public class YahooWebDataSectorCompaniesDao implements SectorsCompaniesYahooWebD
 	
 	public YahooWebDataSectorCompaniesDao(Logger log, String url, WebParsingUtils  webParsingUtils) {
 		this.log = log;
-//		this.url = url;
+		this.url = url;
 		this.webParsingUtils = webParsingUtils;
 	}
 	

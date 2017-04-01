@@ -27,6 +27,7 @@ import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
 import com.oak.api.finance.model.dto.Screen0Result;
 import com.oak.external.utils.input.api.StreamProvider;
+import com.oak.external.utils.web.WebParsingUtils;
 import com.oak.finance.app.dao.SymbolsDao;
 
 public class SymbolsFileDao implements SymbolsDao {
@@ -37,14 +38,16 @@ public class SymbolsFileDao implements SymbolsDao {
 	private final String goodValueStocksFileName;
 	private final Logger logger;
 	private final StreamProvider streamProvider;
+	private final WebParsingUtils webParsingUtils;
 
 	public SymbolsFileDao(String stocksFilename, String stocksWithNoPriceFileName, String goodValueStocksFileName,
-			String interestingCompaniesSymbolsFileName, StreamProvider streamProvider, Logger logger) {
+			String interestingCompaniesSymbolsFileName, StreamProvider streamProvider, WebParsingUtils webParsingUtils, Logger logger) {
 		this.stocksWithNoPriceFileName = stocksWithNoPriceFileName;
 		this.stocksFileName = stocksFilename;
 		this.goodValueStocksFileName = goodValueStocksFileName;
 		this.interestingCompaniesSymbolsFileName = interestingCompaniesSymbolsFileName;
 		this.streamProvider = streamProvider;
+		this.webParsingUtils = webParsingUtils;
 		this.logger = logger;
 	}
 
@@ -92,15 +95,12 @@ public class SymbolsFileDao implements SymbolsDao {
 		}
 		return ret;
 	}
-	private Double parseDouble(String t) {
-		Double ret;
-		if(t == null || t.toLowerCase().trim().equals("null")) {
-			ret = null;
-		}else {			
-			ret = Double.parseDouble(t);
-		}
-		return ret; 
+	
+	private Double parseDouble(String s) {
+		Double d = webParsingUtils.parseDouble(s);
+		return d;
 	}
+
 	//03/06/2016 21:03
 	private SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy hh:mm"); 
 	private DateTimeFormatter format = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm");

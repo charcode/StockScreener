@@ -268,6 +268,14 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 		}
 		return ret;
 	}
+	/**
+	 * 
+	 * @param url = https://query1.finance.yahoo.com/v10/finance/quoteSummary/IQE.L?formatted=true&crumb=lXTeLpxBk2G&lang=en-US&region=US&modules=incomeStatementHistory%2CcashflowStatementHistory%2CbalanceSheetHistory%2CincomeStatementHistoryQuarterly%2CcashflowStatementHistoryQuarterly%2CbalanceSheetHistoryQuarterly%2Cearnings&corsDomain=finance.yahoo.com
+	 * @returnurl = https://query1.finance.yahoo.com/v10/finance/quoteSummary/AAIF.L?formatted=true&modules=incomeStatementHistory%2CcashflowStatementHistory%2CbalanceSheetHistory%2CincomeStatementHistoryQuarterly%2CcashflowStatementHistoryQuarterly%2CbalanceSheetHistoryQuarterly%2Cearnings
+	 * @throws IOException
+	 * @throws JsonParseException
+	 * @throws JsonMappingException
+	 */
 	private YahooFinancialJsonDataModel downloadFinancialData(String url) throws IOException, JsonParseException, JsonMappingException {
 		String json;
 		json = Jsoup
