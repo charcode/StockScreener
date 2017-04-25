@@ -62,66 +62,80 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 
 		boolean oldOrMissingFinancials = true;
 		FinancialData financialData;
-		FinancialData dbFinancials  = null;
-//		boolean needToCheck = false;
-//		if (needToCheck) {
-			dbFinancials = statementsConverter.getFinancialData(ticker, balanceSheetsInDb,
-					cashFlowStatementsInDb, incomeStatementsInDb);
+		FinancialData dbFinancials = null;
+		// boolean needToCheck = false;
+		// if (needToCheck) {
+		dbFinancials = statementsConverter.getFinancialData(ticker, balanceSheetsInDb, cashFlowStatementsInDb,
+				incomeStatementsInDb);
 
-			if (!dbFinancials.getQuarterlyBalanceSheet().isEmpty()) {
-				Date lastPeriod = dbFinancials.getQuarterlyBalanceSheet().lastKey();
-				ZonedDateTime ninetyDaysAgo = ZonedDateTime.now().plusDays(-90);
-				oldOrMissingFinancials = lastPeriod.toInstant().isBefore(ninetyDaysAgo.toInstant());
-				logger.info(ticker + ": " + (oldOrMissingFinancials ? "N" : "No n")
-						+ "eed to download balance sheet for [" + ticker + "]. Latest saved is from " + lastPeriod);
-			}
-//		}
-		if(oldOrMissingFinancials) {
-			logger.info("downloading balance sheet for ["+ticker+"]");
+		if (!dbFinancials.getQuarterlyBalanceSheet().isEmpty()) {
+			Date lastPeriod = dbFinancials.getQuarterlyBalanceSheet().lastKey();
+			ZonedDateTime ninetyDaysAgo = ZonedDateTime.now().plusDays(-90);
+			oldOrMissingFinancials = lastPeriod.toInstant().isBefore(ninetyDaysAgo.toInstant());
+			logger.info(ticker + ": " + (oldOrMissingFinancials ? "N" : "No n") + "eed to download balance sheet for ["
+					+ ticker + "]. Latest saved is from " + lastPeriod);
+		}
+		// }
+		if (oldOrMissingFinancials) {
+			logger.info("downloading balance sheet for [" + ticker + "]");
 
 			financialData = financialDataDao.getFinancialDataForSymbol(ticker,
-					null /* some provider of financial statements data need an exchange supplied, some don't */);
-			SortedMap<Date, BalanceSheet> annualBalanceSheet = financialData.getAnnualBalanceSheet();
-			SortedMap<Date, BalanceSheet> quarterlyBalanceSheet = financialData.getQuarterlyBalanceSheet();
-			SortedMap<Date, CashFlowStatement> annualCashflowStatement = financialData.getAnnualCashflowStatement();
-			SortedMap<Date, CashFlowStatement> quarterlyCashflowStatement = financialData.getQuarterlyCashflowStatement();
-			SortedMap<Date, IncomeStatement> annualIncomeStatement = financialData.getAnnualIncomeStatement();
-			SortedMap<Date, IncomeStatement> quarterlyIncomeStatement = financialData.getQuarterlyIncomeStatement();
-			
-			Set<BalanceSheetDto> balanceSheets = new HashSet<>();
-			Set<CashFlowStatementDto> cashflowStatements = new HashSet<>();
-			Set<IncomeStatementDto> incomeStatements = new HashSet<>();
-			
-			extractFinancialData(annualBalanceSheet, balanceSheets, StatementPeriod.ANNUAL, balanceSheetConverter);
-			extractFinancialData(quarterlyBalanceSheet, balanceSheets, StatementPeriod.QUARTERLY, balanceSheetConverter);
-			
-			extractFinancialData(annualCashflowStatement, cashflowStatements, StatementPeriod.ANNUAL, cashflowConverter);
-			extractFinancialData(quarterlyCashflowStatement, cashflowStatements, StatementPeriod.QUARTERLY, cashflowConverter);
-			
-			extractFinancialData(annualIncomeStatement, incomeStatements, StatementPeriod.ANNUAL, incomeStatmentConverter);
-			extractFinancialData(quarterlyIncomeStatement, incomeStatements, StatementPeriod.QUARTERLY, incomeStatmentConverter);
+					null /*
+							 * some provider of financial statements data need an
+							 * exchange supplied, some don't
+							 */);
+			if (!FinancialData.isBlank(financialData)) {
+				SortedMap<Date, BalanceSheet> annualBalanceSheet = financialData.getAnnualBalanceSheet();
+				SortedMap<Date, BalanceSheet> quarterlyBalanceSheet = financialData.getQuarterlyBalanceSheet();
+				SortedMap<Date, CashFlowStatement> annualCashflowStatement = financialData.getAnnualCashflowStatement();
+				SortedMap<Date, CashFlowStatement> quarterlyCashflowStatement = financialData
+						.getQuarterlyCashflowStatement();
+				SortedMap<Date, IncomeStatement> annualIncomeStatement = financialData.getAnnualIncomeStatement();
+				SortedMap<Date, IncomeStatement> quarterlyIncomeStatement = financialData.getQuarterlyIncomeStatement();
 
-			// extract new balance sheets that need to be written to the DB
-			Set<BalanceSheetDto> bsToBeSaved = filterFinancialDataToBeSaved(balanceSheetsInDb, balanceSheets);
-			Set<CashFlowStatementDto> cfToBeSaved = filterFinancialDataToBeSaved(cashFlowStatementsInDb,
-					cashflowStatements);
-			Set<IncomeStatementDto> isToBeSaved = filterFinancialDataToBeSaved(incomeStatementsInDb, incomeStatements);
-			
-			
-			////////////////////////////////////////////////////////////////////
-			//// LOGIC TO REMOVE incorrect annual statements saved as quarterly
-			Set<BalanceSheetDto> bsToBeDeleted = filterFinancialDataToBeDeleted(balanceSheetsInDb);
-			Set<CashFlowStatementDto> cfToBeDeleted = filterFinancialDataToBeDeleted(cashFlowStatementsInDb);
-			Set<IncomeStatementDto> isToBeDeleted = filterFinancialDataToBeDeleted(incomeStatementsInDb);
-			
-			balanceSheetRepository.delete(bsToBeDeleted);
-			cashFlowStatementRepository.delete(cfToBeDeleted);
-			incomeStatementRepository.delete(isToBeDeleted);
-			/////////////// end ////////////////////////////////////////////
-			
-			balanceSheetRepository.save(bsToBeSaved);
-			cashFlowStatementRepository.save(cfToBeSaved);
-			incomeStatementRepository.save(isToBeSaved);
+				Set<BalanceSheetDto> balanceSheets = new HashSet<>();
+				Set<CashFlowStatementDto> cashflowStatements = new HashSet<>();
+				Set<IncomeStatementDto> incomeStatements = new HashSet<>();
+
+				extractFinancialData(annualBalanceSheet, balanceSheets, StatementPeriod.ANNUAL, balanceSheetConverter);
+				extractFinancialData(quarterlyBalanceSheet, balanceSheets, StatementPeriod.QUARTERLY,
+						balanceSheetConverter);
+
+				extractFinancialData(annualCashflowStatement, cashflowStatements, StatementPeriod.ANNUAL,
+						cashflowConverter);
+				extractFinancialData(quarterlyCashflowStatement, cashflowStatements, StatementPeriod.QUARTERLY,
+						cashflowConverter);
+
+				extractFinancialData(annualIncomeStatement, incomeStatements, StatementPeriod.ANNUAL,
+						incomeStatmentConverter);
+				extractFinancialData(quarterlyIncomeStatement, incomeStatements, StatementPeriod.QUARTERLY,
+						incomeStatmentConverter);
+
+				// extract new balance sheets that need to be written to the DB
+				Set<BalanceSheetDto> bsToBeSaved = filterFinancialDataToBeSaved(balanceSheetsInDb, balanceSheets);
+				Set<CashFlowStatementDto> cfToBeSaved = filterFinancialDataToBeSaved(cashFlowStatementsInDb,
+						cashflowStatements);
+				Set<IncomeStatementDto> isToBeSaved = filterFinancialDataToBeSaved(incomeStatementsInDb,
+						incomeStatements);
+
+				////////////////////////////////////////////////////////////////////
+				//// LOGIC TO REMOVE incorrect annual statements saved as
+				//////////////////////////////////////////////////////////////////// quarterly
+				Set<BalanceSheetDto> bsToBeDeleted = filterFinancialDataToBeDeleted(balanceSheetsInDb);
+				Set<CashFlowStatementDto> cfToBeDeleted = filterFinancialDataToBeDeleted(cashFlowStatementsInDb);
+				Set<IncomeStatementDto> isToBeDeleted = filterFinancialDataToBeDeleted(incomeStatementsInDb);
+
+				balanceSheetRepository.delete(bsToBeDeleted);
+				cashFlowStatementRepository.delete(cfToBeDeleted);
+				incomeStatementRepository.delete(isToBeDeleted);
+				/////////////// end ////////////////////////////////////////////
+
+				balanceSheetRepository.save(bsToBeSaved);
+				cashFlowStatementRepository.save(cfToBeSaved);
+				incomeStatementRepository.save(isToBeSaved);
+			}else{
+				logger.error("Cannot get financials for "+ticker);
+			}
 		} else {
 			financialData = dbFinancials;
 		}

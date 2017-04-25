@@ -87,6 +87,7 @@ public class EarningsCalendarYahooWebDao implements EarningsCalendarDao {
 	}
 
 	private Document downladPage(String link) throws IOException {
+		log.info("Downloading earning data from: "+link);
 		return Jsoup.connect(link).header("Accept-Encoding", "gzip, deflate")
 				.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0").maxBodySize(0)
 				.timeout(600000).get();
@@ -222,10 +223,10 @@ public class EarningsCalendarYahooWebDao implements EarningsCalendarDao {
 					String symbol = idLink.attr("data-symbol");
 					String companyName = idLink.attr("title");
 
-					Double epsEstimate = webParsingUtils.parseDouble(ds.get(2).text());
-					Double epsAnnounced = webParsingUtils.parseDouble(ds.get(3).text());
-					Double surprisePercent = webParsingUtils.parseDouble(ds.get(4).text());
-					AnnouncementTime announcementTime = AnnouncementTime.fromText(ds.get(5).text());
+//					Double epsEstimate = webParsingUtils.parseDouble(ds.get(2).text());
+//					Double epsAnnounced = webParsingUtils.parseDouble(ds.get(3).text());
+//					Double surprisePercent = webParsingUtils.parseDouble(ds.get(4).text());
+					AnnouncementTime announcementTime = AnnouncementTime.fromText(ds.get(2).text());
 					EarningsCalendar ec = new EarningsCalendar();
 					ec.setAsOfCalendar(d);
 					ec.setAnnouncementDate(now);

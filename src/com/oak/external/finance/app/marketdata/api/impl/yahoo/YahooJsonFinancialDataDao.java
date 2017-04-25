@@ -5,13 +5,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -43,14 +42,11 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 	public FinancialData getFinancialDataForSymbol(String symbol, String exchange) {
 		String url = root + symbol + ext;
 		String json = null;
-		FinancialData ret = new FinancialData(symbol, Maps.newTreeMap(), Maps.newTreeMap(), 
-				/* annualCashflowStatement */ null, 
-				/* quarterlyCashflowStatement */ null, 
-				/* annualIncomeStatement */ null, 
-				/* quarterlyIncomeStatement */ null);;
+		FinancialData ret = FinancialData.blankFinanicalData(symbol);
 		YahooVal parsingvalue = null;
 		try {
 			YahooFinancialJsonDataModel financial = downloadFinancialData(url);
+			if(financial != null) {
 			List<BalanceSheetData> balanceSheetsYearly = financial
 					.getQuoteSummary()
 					.getResult()
@@ -131,6 +127,7 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 					/* quarterlyCashflowStatement */ quarterlyCashflowStatement, 
 					/* annualIncomeStatement */ yearlyIncomeStatement, 
 					/* quarterlyIncomeStatement */ quaterlyIncomeStatement);
+			}
 			
 		} catch (IOException e1) {
 			String msg = "Can't " + (json == null ? "get " + url : "parse " + json);
@@ -145,6 +142,7 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 
 		return ret;
 	}
+
 	private SortedMap<Date,com.oak.external.finance.model.economy.IncomeStatement> extractIncomeStatementFromYahooRawData(String symbol,
 			ImmutableMap<YahooVal, IncomeStatement> incomeStatementRawData) throws ParseException {
 		SortedMap<Date,com.oak.external.finance.model.economy.IncomeStatement> ret = new TreeMap<>();
@@ -277,22 +275,24 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 	 * @throws JsonMappingException
 	 */
 	private YahooFinancialJsonDataModel downloadFinancialData(String url) throws IOException, JsonParseException, JsonMappingException {
-		String json;
-		json = Jsoup
-				.connect(url)
-			 	.header("Accept-Encoding", "gzip, deflate")
-			    .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0")
-			    .maxBodySize(0)
-			    .timeout(600000)
-				.ignoreContentType(true).execute().body();
-		
-		if(json.indexOf("preferred" )>0) {
-			System.out.println(json);
-			log.info("\n"+json);
+		String json = null;
+		YahooFinancialJsonDataModel financial = null;
+		try {
+			json = Jsoup.connect(url).header("Accept-Encoding", "gzip, deflate")
+					.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0")
+					.maxBodySize(0).timeout(600000).ignoreContentType(true).execute().body();
+		} catch (HttpStatusException e) {
+			log.error("Cannot find data at: "+url);
 		}
-		
-		ObjectMapper mapper = new ObjectMapper();
-		YahooFinancialJsonDataModel financial = mapper.readValue(json, YahooFinancialJsonDataModel.class);
+		if (json != null) {
+			if (json.indexOf("preferred") > 0) {
+				System.out.println(json);
+				log.info("\n" + json);
+			}
+
+			ObjectMapper mapper = new ObjectMapper();
+			financial = mapper.readValue(json, YahooFinancialJsonDataModel.class);
+		}
 		return financial;
 	}
 

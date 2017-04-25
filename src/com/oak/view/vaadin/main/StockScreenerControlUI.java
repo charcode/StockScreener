@@ -24,6 +24,7 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.themes.ValoTheme;
 
 @SpringUI
 @Theme("valo")
@@ -81,6 +82,7 @@ public class StockScreenerControlUI extends UI {
 		filtersBtn.setWidth(buttonSize,Unit.PIXELS);
 		mainBtn.setEnabled(false);
 		filtersBtn.setEnabled(false);
+		filtersBtn.addStyleName(ValoTheme.BUTTON_PRIMARY);
 		leftMenu.setVisible(false);
 		
 		topMenu.addComponents(envLbl,processBtn);
