@@ -10,7 +10,6 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import com.oak.api.finance.model.dto.BalanceSheetDto;
 import com.oak.api.finance.utils.repository.ReconcilingRepository;
-import java.lang.Double;
 
 @RepositoryRestResource(collectionResourceRel = "balance_sheet", path = "balance_sheets")
 public interface BalanceSheetRepository extends PagingAndSortingRepository<BalanceSheetDto, Long>, ReconcilingRepository {

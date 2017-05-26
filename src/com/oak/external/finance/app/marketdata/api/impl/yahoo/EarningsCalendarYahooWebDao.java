@@ -219,27 +219,40 @@ public class EarningsCalendarYahooWebDao implements EarningsCalendarDao {
 				Elements ds = r.select("td");
 				if (!ds.isEmpty()) {
 					EarningsCalendar e = new EarningsCalendar();
-					Element idLink = ds.get(0).select("a").get(0);
-					String symbol = idLink.attr("data-symbol");
-					String companyName = idLink.attr("title");
-
-//					Double epsEstimate = webParsingUtils.parseDouble(ds.get(2).text());
-//					Double epsAnnounced = webParsingUtils.parseDouble(ds.get(3).text());
-//					Double surprisePercent = webParsingUtils.parseDouble(ds.get(4).text());
-					AnnouncementTime announcementTime = AnnouncementTime.fromText(ds.get(2).text());
-					EarningsCalendar ec = new EarningsCalendar();
-					ec.setAsOfCalendar(d);
-					ec.setAnnouncementDate(now);
-					ec.setCompanyName(companyName);
-					ec.setTicker(symbol);
-					ec.setTime(announcementTime);
-					ret.add(ec);
+					may2017Parse(e, ds);
+					e.setAsOfCalendar(d);
+					e.setAnnouncementDate(now);
+					ret.add(e);
 				}
 			} catch (Throwable t) {
 				log.error("can't parse", t);
 			}
 		}
 		return ret;
+	}
+
+	private void may2017Parse(EarningsCalendar e, Elements t) {
+		String ticker = t.select(".data-col0").text();
+		String companyName = t.select(".data-col1").text();
+		String announcementTimeStr = t.select(".data-col2").text();
+		AnnouncementTime announcementTime =AnnouncementTime.fromText(announcementTimeStr);
+		e.setCompanyName(companyName);
+		e.setTicker(ticker);
+		e.setTime(announcementTime);
+	}
+	private void preMay2017Parse(EarningsCalendar e, Elements ds) {
+		Element idLink = ds.get(0).select("a").get(0);
+		String symbol = idLink.attr("data-symbol");
+		String companyName = idLink.attr("title");
+
+//					Double epsEstimate = webParsingUtils.parseDouble(ds.get(2).text());
+//					Double epsAnnounced = webParsingUtils.parseDouble(ds.get(3).text());
+//					Double surprisePercent = webParsingUtils.parseDouble(ds.get(4).text());
+		AnnouncementTime announcementTime = AnnouncementTime.fromText(ds.get(2).text());
+
+		e.setCompanyName(companyName);
+		e.setTicker(symbol);
+		e.setTime(announcementTime);
 	}
 
 	private List<EarningsCalendar> oldParser(Date announcementDate, Document document) throws ParseException {

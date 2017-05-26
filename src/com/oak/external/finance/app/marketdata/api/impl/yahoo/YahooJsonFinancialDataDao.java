@@ -282,7 +282,7 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 					.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0")
 					.maxBodySize(0).timeout(600000).ignoreContentType(true).execute().body();
 		} catch (HttpStatusException e) {
-			log.error("Cannot find data at: "+url);
+			log.error("Cannot find data at: "+url,e);
 		}
 		if (json != null) {
 			if (json.indexOf("preferred") > 0) {

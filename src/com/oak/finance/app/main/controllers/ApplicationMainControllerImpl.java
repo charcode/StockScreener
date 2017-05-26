@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.data.util.StreamUtils;
 
 import com.google.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.oak.api.MainController.DuplicatCashflowListener;
 import com.oak.api.finance.dao.DuplicateCashflowsDao;
 import com.oak.api.finance.dao.DuplicateCashflowsDao.Duplicate;
@@ -217,7 +218,13 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 
 	synchronized private void checkAndSave(ReconcilingRepository rep,Set<String> tickers) {
 		if (!tickers.isEmpty()) {
-			Set<String> tickersNotSaved = rep.findDistinctTickerNotIn(tickers);
+//			Tried to send an out-of-range integer as a 2-byte value: 33518
+//			32767
+			List<List<String>> partition = Lists.partition(tickers.stream().collect(Collectors.toList()), 32760);
+			Set<String> tickersNotSaved = rep.findDistinctTickerNotIn(partition.get(0).stream().collect(Collectors.toSet()));
+			for(int i =1; i<partition.size();i++) {
+				tickersNotSaved.removeAll(partition.get(i));
+			}
 			tickers.addAll(tickersNotSaved);
 			Set<Company> companies = tickersNotSaved.stream().map(t -> {
 				Company c = new Company();
