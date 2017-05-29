@@ -113,9 +113,9 @@ public class YahooDataConverterImpl implements YahooDataConverter {
 	    Double ask = null;
 	    Double bid = null;
 	    Date lastTradeTime = null;
-	    Integer askSize = null;
+	    Long askSize = null;
 	    Long avgVolume = null;
-	    Integer bidSize = null;
+	    Long bidSize = null;
 
 	    Double change = null;
 	    Double changeFromAvg200 = null;
@@ -130,7 +130,7 @@ public class YahooDataConverterImpl implements YahooDataConverter {
 	    Double dayHigh = null;
 	    Double dayLow = null;
 	    String lastTradeDateStr = null;
-	    Integer lastTradeSize = null;
+	    Long lastTradeSize = null;
 	    String lastTradeTimeStr = null;
 	    Double open = null;
 	    Double previousClose = null;

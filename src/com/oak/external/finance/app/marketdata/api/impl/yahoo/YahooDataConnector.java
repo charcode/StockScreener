@@ -17,17 +17,17 @@ import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
 
-import yahoofinance.YahooFinance;
+import yahoofinance.YahooFinanceWrapper;
 
 public class YahooDataConnector implements DataConnector {
 	private final Logger log;
 	private final YahooDataConverter converter;
-	private final YahooFinance connector;
+	private final YahooFinanceWrapper connector;
 
 	public YahooDataConnector(Logger log, YahooDataConverter converter) {
 		this.log = log;
 		this.converter = converter;
-		connector = new YahooFinance(LogManager.getLogger(YahooFinance.class));
+		connector = new YahooFinanceWrapper(LogManager.getLogger(YahooFinanceWrapper.class));
 	}
 
 	@Override

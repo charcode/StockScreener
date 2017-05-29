@@ -166,8 +166,8 @@ public class MarketDataMonitorsControllerImpl implements MarketDataMonitorsContr
 		HashMap<Date, Economic> stopMap = new HashMap<Date, Economic>();
 		Date beginning = Calendar.getInstance().getTime();
 		beginning.setTime(0);
-		Economic stopEconomic = new Economic(beginning, 0.0, 0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-				0.0, 0.0, 0.0, "STOP", 0, "STOP", 0.0, 0.0, 0.0, 0.0, "STOP", TimeZone.getDefault(), 0L, 0.0, 0.0, 0.0,
+		Economic stopEconomic = new Economic(beginning, 0.0, 0L, 0.0, 0L, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+				0.0, 0.0, 0.0, "STOP", 0L, "STOP", 0.0, 0.0, 0.0, 0.0, "STOP", TimeZone.getDefault(), 0L, 0.0, 0.0, 0.0,
 				0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0L, 0L, 0L, 0.0, 0.0,
 				Calendar.getInstance(), Calendar.getInstance());
 		stopMap.put(beginning, stopEconomic);

@@ -28,7 +28,7 @@ public class EconomicDto {
 	    private Double dayHigh;
 	    private Double dayLow;
 	    private String lastTradeDateStr;
-	    private Integer lastTradeSize;
+	    private Long lastTradeSize;
 	    private String lastTradeTimeStr;
 	    private Double open;
 	    private Double previousClose;

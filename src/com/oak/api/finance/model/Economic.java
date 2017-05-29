@@ -13,7 +13,7 @@ public class Economic {
     private final Double dayHigh;
     private final Double dayLow;
     private final String lastTradeDateStr;
-    private final Integer lastTradeSize;
+    private final Long lastTradeSize;
     private final String lastTradeTimeStr;
     private final Double open;
     private final Double previousClose;
@@ -47,11 +47,11 @@ public class Economic {
     
     private Double perCalculated;
 
-	public Economic(Date priceDate, Double bid, Integer bidSize, Double ask, Integer askSize, Double change,
+	public Economic(Date priceDate, Double bid, Long bidSize, Double ask, Long askSize, Double change,
 			Double changeFromAvg200, Double changeFromAvg200InPercent, Double changeFromAvg50,
 			Double changeFromAvg50InPercent, Double changeFromYearHigh, Double changeFromYearHighInPercent,
 			Double changeFromYearLow, Double changeFromYearLowInPercent, Double changeInPercent, Double dayHigh,
-			Double dayLow, String lastTradeDateStr, Integer lastTradeSize, String lastTradeTimeStr, Double open,
+			Double dayLow, String lastTradeDateStr, Long lastTradeSize, String lastTradeTimeStr, Double open,
 			Double previousClose, Double priceAvg200, Double priceAvg50, String symbol, TimeZone timeZone, Long volume,
 			Double yearHigh, Double yearLow, Double eps, Double bookValuePerShare, Double ebitda,
 			Double epsEstimateCurrentYear, Double epsEstimateNextQuarter, Double epsEstimateNextYear, Double marketCap,
@@ -115,7 +115,7 @@ public class Economic {
 		return lastTradeDateStr;
 	}
 
-	public Integer getLastTradeSize() {
+	public Long getLastTradeSize() {
 		return lastTradeSize;
 	}
 
