@@ -3,18 +3,12 @@ package yahoofinance;
 
 import java.io.IOException;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
 
-import yahoofinance.histquotes.HistQuotesRequest;
 import yahoofinance.histquotes.Interval;
 import yahoofinance.quotes.fx.FxQuote;
-import yahoofinance.quotes.fx.FxQuotesRequest;
-import yahoofinance.quotes.stock.StockQuotesData;
-import yahoofinance.quotes.stock.StockQuotesRequest;
 
 /**
  * YahooFinance can be used to retrieve quotes and some extra information on stocks.
