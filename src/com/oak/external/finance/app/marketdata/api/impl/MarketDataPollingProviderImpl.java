@@ -1,6 +1,9 @@
 package com.oak.external.finance.app.marketdata.api.impl;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,6 +12,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -21,15 +26,18 @@ import com.oak.api.finance.model.Stock;
 import com.oak.api.finance.model.dto.BalanceSheetDto;
 import com.oak.api.finance.model.dto.Control;
 import com.oak.api.finance.model.dto.EarningsCalendar;
+import com.oak.api.finance.model.dto.Quote;
 import com.oak.api.finance.model.dto.Status;
 import com.oak.api.finance.repository.BalanceSheetRepository;
 import com.oak.api.finance.repository.EarningsCalendarRepository;
+import com.oak.api.finance.repository.QuoteRepository;
 import com.oak.api.providers.control.ControlProvider;
 import com.oak.api.providers.control.ControlType;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
 import com.oak.external.finance.app.marketdata.api.EarningsCalendarDao;
 import com.oak.external.finance.app.marketdata.api.FinancialStatementsProvider;
 import com.oak.external.finance.app.marketdata.api.MarketDataProvider;
+import com.oak.finance.interest.SymbolsController;
 
 public class MarketDataPollingProviderImpl implements MarketDataProvider {
 
@@ -39,18 +47,23 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 	private final FinancialStatementsProvider financialsProvider;
 	private final BalanceSheetRepository balanceSheetRepository;
 	private final ControlProvider controlProvider;
+	private final SymbolsController symbolsController;
+	private final QuoteRepository quoteRepository;
 	private final Logger log;
+	private final Executor ex = Executors.newCachedThreadPool();
 
 	public MarketDataPollingProviderImpl(DataConnector dataConnector, EarningsCalendarDao earningsCalendarDao,
 			EarningsCalendarRepository earningsCalendarRepository, BalanceSheetRepository balanceSheetRepository,
 			FinancialStatementsProvider financialsProvider, ControlProvider controlProvider,
-			Logger log) {
+			QuoteRepository quoteRepository, SymbolsController symbolsController, Logger log) {
 		this.dataConnector = dataConnector;
 		this.balanceSheetRepository = balanceSheetRepository;
 		this.earningsCalendarRepository = earningsCalendarRepository;
 		this.earningsCalendarDao = earningsCalendarDao;
 		this.financialsProvider = financialsProvider;
 		this.controlProvider = controlProvider;
+		this.symbolsController = symbolsController;
+		this.quoteRepository = quoteRepository;
 		this.log = log == null ? LogManager.getLogger(MarketDataPollingProviderImpl.class) : log;
 
 		new Thread() {
@@ -58,13 +71,13 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 			public void run() {
 				initEarningsCalendarRefresh();
 			}
-		}.start();;
+		}.start();
 
 		Timer timer = new Timer();
 		TimerTask task = new TimerTask() {
 			@Override
 			public void run() {
-				initEarningsCalendarRefresh();				
+				runPeriodicTasks();
 			}
 		};
 
@@ -77,7 +90,35 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 		timer.schedule(task, timeout, timeout);
 		
 	}
+	private void runPeriodicTasks() {
+		ex.execute(() -> initEarningsCalendarRefresh());
+		ex.execute(() -> checkHistoricalQuotes());
+	}
 
+	@Override
+	public void checkHistoricalQuotes() {
+		Date yahooFrom = Date.from(LocalDateTime.of(1962,1,2,0,0).toInstant(ZoneOffset.UTC));
+		Iterable<Quote> findAll = quoteRepository.findAll();
+		Date date;
+		if(findAll.iterator().hasNext()) {
+			date =	StreamUtils.createStreamFromIterator(findAll.iterator()).map(q -> q.getDate()).max(Date::compareTo).get();
+		}else {
+			date = yahooFrom;
+		}
+
+		loadHistoricalQuotes(date);
+	}
+	private void loadHistoricalQuotes(Date from) {
+		log.info("Starting the collection of historical quotes... ");
+		Set<String> tickers = symbolsController.getSymbols();
+		
+		Map<String, Set<Quote>> economics = dataConnector.getHistoricalQuotes(tickers, from);
+		for(Collection<Quote> q:economics.values()) {
+			quoteRepository.save(q);
+		}
+		
+	}
+	
 	private void initEarningsCalendarRefresh() {
 		Control latestEarningCalendar = controlProvider.getLatestControlByType(ControlType.EARNINGS_CALENDAR);
 		Calendar lastEarningsUpdate = Calendar.getInstance();
@@ -192,7 +233,7 @@ public class MarketDataPollingProviderImpl implements MarketDataProvider {
 
 	@Override
 	public Map<Stock, Map<Date, Economic>> retrieveMarketData(Set<String> stocks) {
-		return dataConnector.getEconomics(stocks, null);
+		return dataConnector.getEconomics(stocks);
 	}
 
 }

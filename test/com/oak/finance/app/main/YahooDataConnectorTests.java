@@ -37,7 +37,7 @@ public class YahooDataConnectorTests {
 
 	@Test
 	public void testGetEconomics() {
-		Map<Stock, Map<Date, Economic>> economics = undertest.getEconomics(stocks, null);
+		Map<Stock, Map<Date, Economic>> economics = undertest.getEconomics(stocks);
 		log.info(economics);
 	}
 }

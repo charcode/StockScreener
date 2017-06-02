@@ -28,6 +28,7 @@ import com.oak.api.finance.repository.EarningsCalendarRepository;
 import com.oak.api.finance.repository.EconomicRepository;
 import com.oak.api.finance.repository.ExcludedCompanyRepository;
 import com.oak.api.finance.repository.IncomeStatementRepository;
+import com.oak.api.finance.repository.QuoteRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
 import com.oak.api.providers.control.ControlProvider;
@@ -130,7 +131,8 @@ public class ApplicationConfig {
 	private EarningsCalendarRepository earningsCalendarRepository;
 	@Autowired
 	private EconomicRepository economicRepository;
-	
+	@Autowired
+	QuoteRepository	quoteRepository;
 	@Autowired
 	private Environment environment;
 	
@@ -201,7 +203,7 @@ public class ApplicationConfig {
 		MarketDataProvider marketDataPollingProvider = new MarketDataPollingProviderImpl(yahooConnector(),
 				earningsCalendarDao(), earningsCalendarRepository, balanceSheetRepository,
 				financialStatementsProvider(), controlProvider(),
-				LogManager.getFormatterLogger(MarketDataPollingProviderImpl.class));
+				quoteRepository, symbolController(), LogManager.getFormatterLogger(MarketDataPollingProviderImpl.class));
 		log.debug("creating marketDataProvider...done");
 		return marketDataPollingProvider;
 	}

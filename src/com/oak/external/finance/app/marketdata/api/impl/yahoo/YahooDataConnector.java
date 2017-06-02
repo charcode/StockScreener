@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -15,9 +16,12 @@ import org.apache.logging.log4j.Logger;
 
 import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
+import com.oak.api.finance.model.dto.Quote;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
 
 import yahoofinance.YahooFinanceWrapper;
+import yahoofinance.histquotes.HistoricalQuote;
+import yahoofinance.histquotes.Interval;
 
 public class YahooDataConnector implements DataConnector {
 	private final Logger log;
@@ -31,41 +35,36 @@ public class YahooDataConnector implements DataConnector {
 	}
 
 	@Override
-	public Map<Stock, Map<Date, Economic>> getEconomics(Set<String> stocks, Date fromDate) {
+	public Map<Stock, Map<Date, Economic>> getEconomics(Set<String> stocks) {
 		Map<Stock, Map<Date, Economic>> ret = new HashMap<>();
 
 		if (stocks != null && !stocks.isEmpty()) {
-			ret = getEconomicsLoop(stocks, fromDate);
+			ret = getEconomicsLoop(stocks);
 		}
 		return ret;
 	}
 	
-	private Map<Stock, Map<Date, Economic>> getEconomicsLoop(Set<String> stocks, Date fromDate) {
-		HashMap<Stock, Map<Date, Economic>> ret = new HashMap<Stock, Map<Date, Economic>>();;
+	private Map<Stock, Map<Date, Economic>> getEconomicsLoop(Set<String> stocks) {
+		HashMap<Stock, Map<Date, Economic>> ret = new HashMap<Stock, Map<Date, Economic>>();
 		Collection<String[]> batches = batchStocks(stocks, 20);
 		for (String[] batch : batches) {
 			int attempt = 0;
-			IOException e = getEconomicsForBatch(fromDate, ret, batch);
+			IOException e = getEconomicsForBatch(ret, batch);
 			while(e != null) {
 				String batchToStr = StringUtils.join(batch, ", ");
 				if(attempt++ >= 5) {
 					log.error("Giving up after failed to load maximum attemps: " + batchToStr,e);
 					break;
 				}
-				e = getEconomicsForBatch(fromDate, ret, batch);
+				e = getEconomicsForBatch(ret, batch);
 				log.warn("retrying for the time n: " + (attempt + 1 ) + " loading batch: " + batchToStr);
 			}
 		}
 		return ret;
 	}
 
-	private IOException getEconomicsForBatch(Date fromDate, HashMap<Stock, Map<Date, Economic>> econMap, String[] batch) {
-		Calendar from = null;
+	private IOException getEconomicsForBatch(HashMap<Stock, Map<Date, Economic>> econMap, String[] batch) {
 		IOException ret = null;
-		if (fromDate != null) {
-			from = Calendar.getInstance();
-			from.setTime(fromDate);
-		}
 		try {
 			Map<String, yahoofinance.Stock> map = null;
 			map = connector.get(batch);
@@ -101,6 +100,32 @@ public class YahooDataConnector implements DataConnector {
 		String[] array = batchList.toArray(stocksArray);
 		batches.add(array);
 		return batches;
+	}
+
+	@Override
+	public Map<String, Set<Quote>> getHistoricalQuotes(Set<String> tickers, Date fromDate) {
+		String[] ticks = new String[tickers.size()];
+		tickers.toArray(ticks);
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(fromDate);
+		Map<String, yahoofinance.Stock> map;
+		Map<String, Set<Quote>> ret = new HashMap<>();
+		try {
+			map = connector.get(ticks, cal, Interval.DAILY);
+			for (String ticker : map.keySet()) {
+				HistoricalQuote q = null;
+				Set<Quote> quotes = map.get(ticker).getHistory().stream()
+						.map(s -> new Quote((Long) null, ticker, s.getOpen().doubleValue(), s.getClose().doubleValue(),
+								s.getHigh().doubleValue(), s.getLow().doubleValue(), s.getVolume().longValue(),
+								s.getDate().getTime()))
+						.collect(Collectors.toSet());
+
+				ret.put(ticker, quotes);
+			}
+		} catch (IOException e) {
+			log.error("Error occured while getting historical quotes",e);
+		}
+		return ret;
 	}
 
 }

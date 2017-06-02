@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toSet;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -148,7 +147,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 		Set<String> cmpnies = StreamUtils.createStreamFromIterator(companies.iterator()).map(c -> c.getTicker())
 				.collect(Collectors.toSet());
 		// stock exch date price
-		Map<Pair<String, String>, Map<Date, Double>> companiesExchangePrice = getMarketData(cmpnies, null);
+		Map<Pair<String, String>, Map<Date, Double>> companiesExchangePrice = getMarketData(cmpnies);
 		saveNewCompanies(companies, companiesExchangePrice);
 	}
 
@@ -162,7 +161,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 			Map<String, List<Screen0Result>> resPerStockPerDate = resList.stream()
 					.collect(Collectors.groupingBy(Screen0Result::getTicker));
 
-			Map<Pair<String, String>, Map<Date, Double>> marketData = getMarketData(ticks, d);
+			Map<Pair<String, String>, Map<Date, Double>> marketData = getMarketData(ticks);
 			for (Pair<String, String> stEx : marketData.keySet()) {
 				Map<Date, Double> map = marketData.get(stEx);
 				for (Date date : map.keySet()) {
@@ -253,11 +252,11 @@ public class SymbolsControllerImpl implements SymbolsController {
 		return ret;
 	}
 
-	private Map<Pair<String, String>, Map<Date, Double>> getMarketData(Set<String> symbolList, Date date) {
+	private Map<Pair<String, String>, Map<Date, Double>> getMarketData(Set<String> symbolList) {
 		Collection<Set<String>> batches = batch(symbolList, 10);
 		Map<Pair<String, String>, Map<Date, Double>> pricePerDatePerSock = new HashMap<>();
 		for (Set<String> batch : batches) {
-			Map<Stock, Map<Date, Economic>> batchResult = dataConnector.getEconomics(batch, date);
+			Map<Stock, Map<Date, Economic>> batchResult = dataConnector.getEconomics(batch);
 			for (Stock s : batchResult.keySet()) {
 				Map<Date, Economic> economyMaps = batchResult.get(s);
 				Map<Date, Double> m = new HashMap<>();

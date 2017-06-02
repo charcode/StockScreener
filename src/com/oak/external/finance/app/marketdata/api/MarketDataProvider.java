@@ -11,5 +11,7 @@ import com.oak.api.finance.model.Stock;
 public interface MarketDataProvider {
 
 	Map<Stock, Map<Date, Economic>> retrieveMarketData(Set<String> stocks);
+
+	void checkHistoricalQuotes();
 	
 }
