@@ -34,7 +34,10 @@ public class MainControllerImpl implements MainController {
 		appController.launchAnalysis();
 		return Status.IN_PROGRESS;
 	}
-
+	@Override
+	public void loadHistoricalQuotes() {
+		appController.loadHistoricalQuotes();
+	}
 	@Override
 	public List<Control> getStatuses() {
 		List<Control> sts = fromIterable(ctrlRepo.findAll(), 

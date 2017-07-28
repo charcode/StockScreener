@@ -6,9 +6,9 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -16,11 +16,12 @@ import org.apache.logging.log4j.Logger;
 
 import com.oak.api.finance.model.Economic;
 import com.oak.api.finance.model.Stock;
+import com.oak.api.finance.model.dto.AbstractQuote;
 import com.oak.api.finance.model.dto.Quote;
 import com.oak.external.finance.app.marketdata.api.DataConnector;
+import com.oak.external.finance.app.marketdata.api.yahoo.YahooFinanceWrapper;
 
-import yahoofinance.YahooFinanceWrapper;
-import yahoofinance.histquotes.HistoricalQuote;
+import io.reactivex.Observable;
 import yahoofinance.histquotes.Interval;
 
 public class YahooDataConnector implements DataConnector {
@@ -103,29 +104,14 @@ public class YahooDataConnector implements DataConnector {
 	}
 
 	@Override
-	public Map<String, Set<Quote>> getHistoricalQuotes(Set<String> tickers, Date fromDate) {
+	public Observable<List<AbstractQuote>> getHistoricalQuotes(Set<String> tickers, Date fromDate) {
 		String[] ticks = new String[tickers.size()];
 		tickers.toArray(ticks);
 		Calendar cal = Calendar.getInstance();
+		Observable<List<AbstractQuote>> histQuotes = connector.getStream(ticks, cal, Interval.DAILY);
 		cal.setTime(fromDate);
-		Map<String, yahoofinance.Stock> map;
-		Map<String, Set<Quote>> ret = new HashMap<>();
-		try {
-			map = connector.get(ticks, cal, Interval.DAILY);
-			for (String ticker : map.keySet()) {
-				HistoricalQuote q = null;
-				Set<Quote> quotes = map.get(ticker).getHistory().stream()
-						.map(s -> new Quote((Long) null, ticker, s.getOpen().doubleValue(), s.getClose().doubleValue(),
-								s.getHigh().doubleValue(), s.getLow().doubleValue(), s.getVolume().longValue(),
-								s.getDate().getTime()))
-						.collect(Collectors.toSet());
-
-				ret.put(ticker, quotes);
-			}
-		} catch (IOException e) {
-			log.error("Error occured while getting historical quotes",e);
-		}
-		return ret;
+			
+		return histQuotes;
 	}
 
 }

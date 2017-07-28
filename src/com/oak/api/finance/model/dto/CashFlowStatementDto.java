@@ -1,7 +1,5 @@
 package com.oak.api.finance.model.dto;
 
-import java.util.Date;
-
 import javax.persistence.Entity;
 import javax.persistence.Table;
 

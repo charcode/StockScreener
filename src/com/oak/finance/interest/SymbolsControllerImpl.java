@@ -274,27 +274,10 @@ public class SymbolsControllerImpl implements SymbolsController {
 	@Override
 	public Set<String> getSymbols() {
 		/*
-		addExchangeToCompaniesAndPriceToResult();
-	    cleanupExistingResultsInDb(); 
-	    populateExistingResultsInDb();
+			addExchangeToCompaniesAndPriceToResult();
+		    cleanupExistingResultsInDb(); 
+		    populateExistingResultsInDb();
 		 */
-//		Collection<Control> symbolAndSectorRefresh = controlRepository.findByType(ControlType.SYMBOL_SECTOR_REFRESH);
-		
-//		if (symbolAndSectorRefresh != null && !symbolAndSectorRefresh.isEmpty()) {
-//			TreeMap<Date, List<Control>> refreshes = new TreeMap<>(
-//					symbolAndSectorRefresh.stream().collect(Collectors.groupingBy(Control::getTimeStamp)));
-//			LocalDate lastRefresh = null;
-//			for (Date refreshDate : refreshes.descendingKeySet()) {
-//				for (Control ref : refreshes.get(refreshDate)) {
-//					if (ref.getStatus().equals(Status.SUCCESS)) {
-//						lastRefresh = refreshDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-//						break;
-//					}
-//				}
-//				if (lastRefresh != null) {
-//					break;
-//				}
-//			}
 		Set<String> symbols;
 		Pair<Boolean, Set<String>> refreshSymbolsIfNeeded = refreshSymbolsIfNeeded();
 		if(refreshSymbolsIfNeeded.getLeft()) {
@@ -347,6 +330,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 		SectorsIndustriesCompanies sectorsAndCompanies;
 		sectorsAndCompanies = sectorCompaniesDao.getSectorsAndCompanies();
 		Pair<Control, Set<String>> c = processAndSaveCompaniesSectorsIndustries(sectorsAndCompanies);
+		
 		return c;
 	}
 
@@ -382,12 +366,20 @@ public class SymbolsControllerImpl implements SymbolsController {
 			log.info("saving companies " + companiesToSave.size());
 			companyRepository.save(companiesToSave);
 			log.info("done refreshing sectors, industries and companies " + companiesToSave.size());
-
+			
+			Iterable<CompanyWithProblems> companiesWithError = companyWithErrorsRepository.findAll();
+			Set<String> errorTickers = StreamUtils.createStreamFromIterator(
+					companiesWithError.iterator())
+					.map(cwe -> cwe.getTicker())
+					.collect(toSet());
+			
 			c.setComments("Successful");
 			c.setStatus(Status.SUCCESS);
 			c.setTimeStamp(java.sql.Date.valueOf(LocalDate.now()));
 			c.setType(ControlType.SYMBOL_SECTOR_REFRESH);
-			firms = companies.stream().map(a -> a.getTicker()).collect(Collectors.toSet());
+			firms = companies.stream().map(a -> a.getTicker())
+					.filter(t -> !errorTickers.contains(t))
+					.collect(Collectors.toSet());
 		} catch (Throwable t) {
 			log.error(t.getMessage(),t);
 			firms = new HashSet<>();
@@ -449,11 +441,7 @@ public class SymbolsControllerImpl implements SymbolsController {
 
 	private CompanyWithProblems convertCompanyToDuplicate(Company c) {
 		CompanyWithProblems cp = new CompanyWithProblems();
-		cp.setDescription(c.getDescription());
 		cp.setErrorDate(java.sql.Date.valueOf(LocalDate.now()));
-		cp.setIndustryDescription(c.getIndustryDescription());
-		cp.setSectorDescription(c.getSectorDescription());
-		cp.setName(c.getName());
 		cp.setTicker(c.getTicker());
 		cp.setErrorType(ErrorType.DUPLICATE);
 		return cp;

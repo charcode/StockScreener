@@ -6,6 +6,7 @@ import java.util.SortedMap;
 import org.apache.commons.collections4.MapUtils;
 
 import com.google.common.collect.Maps;
+import com.oak.api.finance.model.dto.CompanyWithProblems;
 import com.oak.external.finance.model.economy.IncomeStatement;
 
 import lombok.Data;
@@ -21,6 +22,11 @@ public class FinancialData {
 	private final SortedMap<Date,IncomeStatement>annualIncomeStatement;
 	private final SortedMap<Date,IncomeStatement>quarterlyIncomeStatement;
 	
+	private CompanyWithProblems error;
+	
+	public boolean isError() {
+		return error != null;
+	}
 	
 	public static FinancialData blankFinanicalData(String symbol) {
 		return new FinancialData(symbol, Maps.newTreeMap(), Maps.newTreeMap(), 
@@ -29,12 +35,13 @@ public class FinancialData {
 				/* annualIncomeStatement */ null, 
 				/* quarterlyIncomeStatement */ null);
 	}
-	public static boolean isBlank(FinancialData financialData) {
+	public static boolean isBlankOrError(FinancialData financialData) {
 		boolean ret = financialData == null ||
-				financialData.isBlank();
+				financialData.isBlank()||
+				financialData.isError();
 		return ret;
 	}
-	public boolean isBlank() {
+	private boolean isBlank() {
 		boolean ret =
 				MapUtils.isEmpty(annualBalanceSheet) 
 				&& MapUtils.isEmpty(quarterlyBalanceSheet)

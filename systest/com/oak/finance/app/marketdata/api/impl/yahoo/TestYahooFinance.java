@@ -1,5 +1,7 @@
 package com.oak.finance.app.marketdata.api.impl.yahoo;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,13 +17,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
+import com.oak.api.finance.model.dto.AbstractQuote;
+import com.oak.api.finance.model.dto.Quote;
+import com.oak.external.finance.app.marketdata.api.yahoo.YahooFinanceWrapper;
+
+import io.reactivex.Observable;
+import io.reactivex.functions.Consumer;
 import yahoofinance.Stock;
-import yahoofinance.YahooFinanceWrapper;
 import yahoofinance.histquotes.HistoricalQuote;
 import yahoofinance.histquotes.Interval;
 import yahoofinance.quotes.stock.StockDividend;
@@ -175,7 +183,45 @@ public class TestYahooFinance {
 		}
 
 	}
+	@Test
+	public void testGetStream() {
+		String[] syms = {"SNAP","FB"};
+		Instant instant = LocalDateTime.of(1962, 1, 2, 1, 0).toInstant(ZoneOffset.UTC);
+		Date date = Date.from(instant);
+		
+		Calendar from = Calendar.getInstance();
+		from.setTime(date);
+		
+		Observable<List<AbstractQuote>> observable = yahooFinance.getStream(syms,from,Interval.DAILY);
+		Cons cons = new Cons() ;
+		observable.subscribe(cons);
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		assertEquals(2,cons.getCount());
+	}
+	class Cons implements Consumer<List<AbstractQuote>>{
+		private Map<String,Integer>counts = new ConcurrentHashMap<>();
+		@Override
+		public void accept(List<AbstractQuote> quotes) throws Exception {
+			for(AbstractQuote t:quotes) {
+				String ticker = t.getTicker();
+				int i = 1;
+				if(counts.containsKey(ticker)) {
+					i = counts.get(ticker) + 1;
+				}
+				counts.put(ticker,i);
+			}
+		}
+		public int getCount(){
+			return counts.size();
+		}
+	}
 	
+	
+
 	@Test
 	public void getHistoricalPrices() {
 		String[] syms = {"SNAP","FB"};

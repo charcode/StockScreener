@@ -10,4 +10,6 @@ public interface ApplicationController {
 	void fixWrongQuarterlyStatements();
 
 	void startUp();
+
+	void loadHistoricalQuotes();
 }

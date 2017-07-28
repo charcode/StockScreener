@@ -2,5 +2,6 @@ package com.oak.api.finance.model.dto;
 
 public enum ErrorType {
 	DUPLICATE,
-	UNKOWN
+	UNKOWN, 
+	NO_FINANCIALS
 }

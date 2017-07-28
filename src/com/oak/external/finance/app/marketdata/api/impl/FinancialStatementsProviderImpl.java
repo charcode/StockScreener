@@ -21,6 +21,7 @@ import com.oak.api.finance.model.dto.IncomeStatementDto;
 import com.oak.api.finance.model.dto.StatementPeriod;
 import com.oak.api.finance.repository.BalanceSheetRepository;
 import com.oak.api.finance.repository.CashFlowStatementRepository;
+import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.IncomeStatementRepository;
 import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
 import com.oak.external.finance.app.marketdata.api.FinancialStatementsProvider;
@@ -34,13 +35,14 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 	private final CashFlowStatementRepository cashFlowStatementRepository;
 	private final Logger logger;
 	private final FinancialStatementsConverter statementsConverter;
-	private BalanceSheetConverter balanceSheetConverter;
-	private CashflowStatmentConverter cashflowConverter;
-	private IncomeStatementConverter incomeStatmentConverter;
+	private final BalanceSheetConverter balanceSheetConverter;
+	private final CashflowStatmentConverter cashflowConverter;
+	private final IncomeStatementConverter incomeStatmentConverter;
+	private final CompanyWithProblemsRepository companyWithProblemsRepository;
 
 	public FinancialStatementsProviderImpl(FinancialDataDao financialDataDao,
 			BalanceSheetRepository balanceSheetRepository, FinancialStatementsConverter statementsConverter,
-			IncomeStatementRepository incomeStatementRepository, CashFlowStatementRepository cashFlowStatementRepository, Logger logger) {
+			IncomeStatementRepository incomeStatementRepository, CashFlowStatementRepository cashFlowStatementRepository, CompanyWithProblemsRepository companyWithProblemsRepository, Logger logger) {
 		this.financialDataDao = financialDataDao;
 		this.balanceSheetRepository = balanceSheetRepository;
 		this.cashFlowStatementRepository = cashFlowStatementRepository;
@@ -50,6 +52,7 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 		this.balanceSheetConverter = new BalanceSheetConverter();
 		this.cashflowConverter = new CashflowStatmentConverter();
 		this.incomeStatmentConverter = new IncomeStatementConverter();
+		this.companyWithProblemsRepository = companyWithProblemsRepository;
 	}
 
 	@Override
@@ -84,7 +87,7 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 							 * some provider of financial statements data need an
 							 * exchange supplied, some don't
 							 */);
-			if (!FinancialData.isBlank(financialData)) {
+			if (!FinancialData.isBlankOrError(financialData)) {
 				SortedMap<Date, BalanceSheet> annualBalanceSheet = financialData.getAnnualBalanceSheet();
 				SortedMap<Date, BalanceSheet> quarterlyBalanceSheet = financialData.getQuarterlyBalanceSheet();
 				SortedMap<Date, CashFlowStatement> annualCashflowStatement = financialData.getAnnualCashflowStatement();
@@ -135,6 +138,9 @@ public class FinancialStatementsProviderImpl implements FinancialStatementsProvi
 				incomeStatementRepository.save(isToBeSaved);
 			}else{
 				logger.error("Cannot get financials for "+ticker);
+				if(financialData.isError()) {
+					companyWithProblemsRepository.save(financialData.getError());
+				}
 			}
 		} else {
 			financialData = dbFinancials;

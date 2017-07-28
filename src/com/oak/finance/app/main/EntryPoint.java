@@ -1,5 +1,7 @@
 package com.oak.finance.app.main;
 
+import java.util.logging.Level;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +27,6 @@ public class EntryPoint implements CommandLineRunner{
 	private static Logger logger = LogManager.getLogger(EntryPoint.class);
 	public static void main(String[] args) {
 		logger.info("Starting application");
-		
 		SpringApplication.run(EntryPoint.class, args);
 		
 	}

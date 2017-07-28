@@ -148,7 +148,11 @@ public class MarketDataMonitorsControllerImpl implements MarketDataMonitorsContr
 			analysisController.onEconomicsUpdate(callback, s, economics, alwaysWatch);
 		}
 	}
-
+	@Override
+	public void loadHistoricalQuotes() {
+		marketDataProvider.checkHistoricalQuotes();
+	}
+	
 	private void marketDataCollectionThread(Set<String> symbolList) {
 		Collection<Set<String>> batches = batch(symbolList, 10);
 		for (Set<String> batch : batches) {

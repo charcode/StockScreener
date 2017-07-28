@@ -39,10 +39,8 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-	<!-- 	<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-cache</artifactId>
-		</dependency> -->
+		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-cache</artifactId> 
+			</dependency> -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
@@ -111,7 +109,6 @@
 		<dependency>
 			<groupId>javax.validation</groupId>
 			<artifactId>validation-api</artifactId>
-			<version>1.1.0.Final</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/de.danielbechler/java-object-diff -->
 		<dependency>
@@ -138,10 +135,10 @@
 		<dependency>
 			<groupId>io.reactivex.rxjava2</groupId>
 			<artifactId>rxjava</artifactId>
-			<version>2.0.9</version>
+			<version>2.0.6</version>
 		</dependency>
 		<!-- <dependency> <groupId>javax.cache</groupId> <artifactId>cache-api</artifactId> 
 			</dependency> <dependency> <groupId>org.ehcache</groupId> <artifactId>ehcache</artifactId> 
-			</dependency> -->
+			</dependency> --> 
 	</dependencies>
 </project>

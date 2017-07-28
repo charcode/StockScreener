@@ -35,6 +35,7 @@ public class StockScreenerControlUI extends UI {
 	private final Grid controlGrid = new Grid();
 	private final Grid screen0Grid = new Grid();
 	private final Button processBtn = new Button("Start Processing");
+	private final Button loadHistoricalQuotesBtn = new Button("Historical Quote Refresh");
 	private final Button mainBtn = new Button("Main");
 	private final Button filtersBtn = new Button("Filters");
 	private Label topLbl = new Label();
@@ -44,6 +45,7 @@ public class StockScreenerControlUI extends UI {
 	private VerticalLayout main;
 	private HorizontalSplitPanel middle;
 	private HorizontalLayout bottom;
+
 	
 	public StockScreenerControlUI(MainController mainController) {
 		this.mainController = mainController;
@@ -55,6 +57,10 @@ public class StockScreenerControlUI extends UI {
 		processBtn.addClickListener( e -> { 
 			Notification.show("Starting run");
 			mainController.launchAnalysis(new AnalysisResultListenerImpl());
+		});
+		loadHistoricalQuotesBtn.addClickListener(e -> {
+			Notification.show("Collecting historical Quotes");
+			mainController.loadHistoricalQuotes();
 		});
 //		initContent0();
 //		initContent1();
@@ -85,7 +91,7 @@ public class StockScreenerControlUI extends UI {
 		filtersBtn.addStyleName(ValoTheme.BUTTON_PRIMARY);
 		leftMenu.setVisible(false);
 		
-		topMenu.addComponents(envLbl,processBtn);
+		topMenu.addComponents(envLbl,processBtn,loadHistoricalQuotesBtn);
 		leftMenu.setWidth(buttonSize,Unit.PIXELS);
 		
 		middle.setFirstComponent(leftMenu);

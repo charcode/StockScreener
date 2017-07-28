@@ -26,8 +26,11 @@ import com.oak.api.finance.repository.CompanyWithProblemsRepository;
 import com.oak.api.finance.repository.ControlRepository;
 import com.oak.api.finance.repository.EarningsCalendarRepository;
 import com.oak.api.finance.repository.EconomicRepository;
+import com.oak.api.finance.repository.ErrorQuoteRepository;
 import com.oak.api.finance.repository.ExcludedCompanyRepository;
 import com.oak.api.finance.repository.IncomeStatementRepository;
+import com.oak.api.finance.repository.QuoteProvider;
+import com.oak.api.finance.repository.QuoteProviderImpl;
 import com.oak.api.finance.repository.QuoteRepository;
 import com.oak.api.finance.repository.Screen0ResultsRepository;
 import com.oak.api.finance.repository.SectorRepository;
@@ -134,6 +137,8 @@ public class ApplicationConfig {
 	@Autowired
 	QuoteRepository	quoteRepository;
 	@Autowired
+	ErrorQuoteRepository errorQuoteRepository;
+	@Autowired
 	private Environment environment;
 	
 	@Bean
@@ -196,6 +201,10 @@ public class ApplicationConfig {
 		log.debug("creating symbolsDao...done");
 		return symbolsFileDao;
 	}
+	@Bean 
+	QuoteProvider quoteProvider() {
+		return new QuoteProviderImpl(quoteRepository);
+	}
 
 	@Bean
 	MarketDataProvider marketDataProvider() {
@@ -203,7 +212,7 @@ public class ApplicationConfig {
 		MarketDataProvider marketDataPollingProvider = new MarketDataPollingProviderImpl(yahooConnector(),
 				earningsCalendarDao(), earningsCalendarRepository, balanceSheetRepository,
 				financialStatementsProvider(), controlProvider(),
-				quoteRepository, symbolController(), LogManager.getFormatterLogger(MarketDataPollingProviderImpl.class));
+				quoteProvider(), errorQuoteRepository, symbolController(), LogManager.getFormatterLogger(MarketDataPollingProviderImpl.class));
 		log.debug("creating marketDataProvider...done");
 		return marketDataPollingProvider;
 	}
@@ -287,7 +296,7 @@ public class ApplicationConfig {
 		log.debug("creating financialStatementsProvider... instance of FinancialStatementsProviderImpl");
 		Logger logger = LogManager.getFormatterLogger(FinancialStatementsProviderImpl.class);
 		FinancialStatementsProviderImpl financialStatementsProvider = new FinancialStatementsProviderImpl(
-				financialDataDao(), balanceSheetRepository, statementsConverter(), incomeStatementRepository, cashFlowStatementRepository, logger);
+				financialDataDao(), balanceSheetRepository, statementsConverter(), incomeStatementRepository, cashFlowStatementRepository, companyWithProblemsRepository, logger);
 		log.debug("creating financialStatementsProvider...done ");
 		return financialStatementsProvider;
 	}

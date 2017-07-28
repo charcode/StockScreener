@@ -21,7 +21,10 @@ import com.google.common.collect.Maps;
 import com.oak.api.finance.model.BalanceSheet;
 import com.oak.api.finance.model.CashFlowStatement;
 import com.oak.api.finance.model.FinancialData;
+import com.oak.api.finance.model.dto.CompanyWithProblems;
+import com.oak.api.finance.model.dto.ErrorType;
 import com.oak.external.finance.app.marketdata.api.FinancialDataDao;
+import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooFinancialJsonDataModel.ErrorYahooFinancialData;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooFinancialJsonDataModel.QuoteSummary.Result.BalanceSheetHistory.BalanceSheetData;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooFinancialJsonDataModel.QuoteSummary.Result.CashflowStatement;
 import com.oak.external.finance.app.marketdata.api.impl.yahoo.YahooFinancialJsonDataModel.QuoteSummary.Result.IncomeStatementHistory.IncomeStatement;
@@ -45,8 +48,8 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 		FinancialData ret = FinancialData.blankFinanicalData(symbol);
 		YahooVal parsingvalue = null;
 		try {
-			YahooFinancialJsonDataModel financial = downloadFinancialData(url);
-			if(financial != null) {
+			YahooFinancialJsonDataModel financial = downloadFinancialData(url,symbol);
+			if(financial != null && !financial.isError) {
 			List<BalanceSheetData> balanceSheetsYearly = financial
 					.getQuoteSummary()
 					.getResult()
@@ -127,6 +130,11 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 					/* quarterlyCashflowStatement */ quarterlyCashflowStatement, 
 					/* annualIncomeStatement */ yearlyIncomeStatement, 
 					/* quarterlyIncomeStatement */ quaterlyIncomeStatement);
+			}else if(financial != null && financial.isError){
+				ErrorYahooFinancialData errorData = (ErrorYahooFinancialData )financial;
+				CompanyWithProblems cwp = new CompanyWithProblems(null,errorData.getTicker(),errorData.getTimestamp(),errorData.getMessage(),ErrorType.NO_FINANCIALS);
+				ret = FinancialData.blankFinanicalData(symbol);
+				ret.setError(cwp);
 			}
 			
 		} catch (IOException e1) {
@@ -274,7 +282,7 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 	 * @throws JsonParseException
 	 * @throws JsonMappingException
 	 */
-	private YahooFinancialJsonDataModel downloadFinancialData(String url) throws IOException, JsonParseException, JsonMappingException {
+	private YahooFinancialJsonDataModel downloadFinancialData(String url,String ticker) throws IOException, JsonParseException, JsonMappingException {
 		String json = null;
 		YahooFinancialJsonDataModel financial = null;
 		try {
@@ -282,9 +290,11 @@ public class YahooJsonFinancialDataDao implements FinancialDataDao {
 					.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0")
 					.maxBodySize(0).timeout(600000).ignoreContentType(true).execute().body();
 		} catch (HttpStatusException e) {
-			log.error("Cannot find data at: "+url,e);
+			String message = "Cannot find data at: "+url;
+			log.error(message,e);
+			financial = YahooFinancialJsonDataModel.errorData(ticker, new Date(), message+" due to: "+e.getMessage());
 		}
-		if (json != null) {
+		if (json != null && financial == null) {
 			if (json.indexOf("preferred") > 0) {
 				System.out.println(json);
 				log.info("\n" + json);

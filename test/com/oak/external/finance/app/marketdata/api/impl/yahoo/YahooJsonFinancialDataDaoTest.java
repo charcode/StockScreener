@@ -1,8 +1,6 @@
 package com.oak.external.finance.app.marketdata.api.impl.yahoo;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 import org.apache.logging.log4j.LogManager;
 import org.junit.Test;
 

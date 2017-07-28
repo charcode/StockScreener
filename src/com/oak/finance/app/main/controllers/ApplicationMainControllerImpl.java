@@ -84,7 +84,10 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 		tickers = excludeTickers(tickers);
 		marketDataMonitorsController.startStocksAnalysis(tickers, interestingSymbols);
 	}
-
+	@Override
+	public void loadHistoricalQuotes() {
+		marketDataMonitorsController.loadHistoricalQuotes();
+	}
 	private Set<String> excludeTickers(Set<String> tickers) {
 		Set<String> excludedSymbols = symbolsController.getExcludedSymbols();
 		log.debug(excludedSymbols.size() + " symbols are excluded.");
@@ -360,7 +363,8 @@ public class ApplicationMainControllerImpl implements ApplicationController {
 
 	@Override
 	public void startUp() {
-		symbolsController.refreshSymbolsIfNeeded();		
+		 symbolsController.refreshSymbolsIfNeeded();		
+//		loadHistoricalQuotes();
 	}
 
 }

@@ -40,5 +40,6 @@ public interface MainController {
 		void onProgress(String ticker, Date date);
 		void onDone(Status status, String ticker);
 	}
+	void loadHistoricalQuotes();
 	
 }

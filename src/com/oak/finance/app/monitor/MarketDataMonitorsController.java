@@ -5,4 +5,6 @@ import java.util.Set;
 public interface MarketDataMonitorsController {
 
 	void startStocksAnalysis(Set<String> symbolList, Set<String> interestingSymbols);
+
+	void loadHistoricalQuotes();
 }

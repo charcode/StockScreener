@@ -1,5 +1,6 @@
 package com.oak.external.finance.app.marketdata.api.impl.yahoo;
 
+import java.util.Date;
 import java.util.List;
 
 import lombok.Data;
@@ -134,6 +135,7 @@ public class YahooFinancialJsonDataModel {
 				Long maxAge;
 				EarningsChart earningsChart;
 				FinancialsChart financialsChart;
+				String financialCurrency;
 			}
 			
 			@Data 
@@ -202,4 +204,27 @@ public class YahooFinancialJsonDataModel {
 	
 	
 	private QuoteSummary quoteSummary;
+	
+	protected boolean isError = false;
+	
+	public static ErrorYahooFinancialData errorData(String ticker, Date timestamp, String message) {
+		return new ErrorYahooFinancialData( ticker,  timestamp,  message);
+	}
+	
+	@Data
+	@EqualsAndHashCode(callSuper=false)
+	public static class ErrorYahooFinancialData extends YahooFinancialJsonDataModel{
+		private final String ticker;
+		private final Date timestamp;
+		private final String message;
+		public ErrorYahooFinancialData(String ticker, Date timestamp, String message) {
+			super();
+			isError = true;
+			
+			this.ticker = ticker;
+			this.timestamp = timestamp;
+			this.message = message;
+		}
+		
+	}
 }
